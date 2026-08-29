@@ -1,0 +1,37 @@
+﻿# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+venv311/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Ultralytics & Training outputs
+runs/
+output/
+*.log
+
+# Generated vehicle data / outputs
+vehicle_data.xlsx
+
+# Datasets (large image archives)
+dataset/
+images/
+annotations/
+
+# Environment variables & secrets
+.env
+.env.*
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
