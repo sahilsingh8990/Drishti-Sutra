@@ -1,12 +1,14 @@
 ﻿import os
 import asyncio
+import cv2
 from pathlib import Path
+from datetime import datetime
 from contextlib import asynccontextmanager
 from typing import Optional, List
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, HTTPException, Body
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, HTTPException, Body, UploadFile, File
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -21,18 +23,16 @@ from backend.analytics_engine import (
     get_hourly_volume_trends,
 )
 from backend.camera_manager import camera_manager
+from backend.anpr_engine import anpr_engine
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Ensure DB is initialized and seeded
     init_db()
     seed_database(force=False)
-    # Start live city traffic background simulator
     sim_task = asyncio.create_task(camera_manager.start_background_simulation())
     yield
-    # Shutdown
     camera_manager.simulation_running = False
     if sim_task:
         sim_task.cancel()
@@ -52,7 +52,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static files mount
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 # ============================================================
@@ -71,9 +70,79 @@ class DetectionInput(BaseModel):
 
 class BlacklistInput(BaseModel):
     plate_number: str
-    category: str  # STOLEN, WANTED, SUSPICIOUS, VIOLATOR, EXPIRED_DOCS
+    category: str
     reason: str
     severity: Optional[str] = "HIGH"
+
+# ============================================================
+# ANPR MODEL & CAMERA FEED ENDPOINTS
+# ============================================================
+
+@app.get("/api/model/status")
+def get_model_status():
+    model_path = Path(__file__).resolve().parent.parent / "plate_model.pt"
+    return {
+        "model_loaded": anpr_engine.is_loaded,
+        "model_file": "plate_model.pt",
+        "model_size_mb": round(model_path.stat().st_size / (1024 * 1024), 2) if model_path.exists() else 0,
+        "architecture": "YOLOv11 Fine-Tuned License Plate Localization",
+        "ocr_engine": "EasyOCR (English)",
+        "yolo_confidence": anpr_engine.yolo_conf,
+        "ocr_confidence": anpr_engine.ocr_conf,
+        "indian_plates_only": anpr_engine.indian_plates_only,
+        "live_camera_active": anpr_engine.live_camera_active
+    }
+
+@app.post("/api/anpr/inspect-image")
+async def inspect_image(file: UploadFile = File(...), log_to_grid: bool = True):
+    image_bytes = await file.read()
+    res = anpr_engine.inspect_image_file(image_bytes, camera_id="CAM-01")
+
+    if res["success"] and log_to_grid:
+        for p in res["plates_detected"]:
+            await camera_manager.record_detection(
+                plate_number=p["plate_number"],
+                camera_id="CAM-01",
+                detection_conf=p["detection_conf"],
+                ocr_conf=p["ocr_conf"],
+                vehicle_type="Manual / Image Inspector",
+                speed_kmh=round(float(cv2.getTickFrequency()) % 40 + 35, 1)
+            )
+
+    return res
+
+def generate_video_stream():
+    """MJPEG Live Streaming Generator with YOLO Plate Detection."""
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        # Yield a placeholder frame if webcam not accessible
+        blank = np.zeros((480, 640, 3), dtype=np.uint8)
+        cv2.putText(blank, "LIVE CAMERA FEED OFFLINE", (80, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+        _, jpeg = cv2.imencode('.jpg', blank)
+        frame_bytes = jpeg.tobytes()
+        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+        return
+
+    try:
+        while True:
+            success, frame = cap.read()
+            if not success:
+                break
+
+            annotated_frame, detections = anpr_engine.process_frame(frame, camera_id="CAM-01")
+
+            _, jpeg = cv2.imencode('.jpg', annotated_frame)
+            frame_bytes = jpeg.tobytes()
+            yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+    finally:
+        cap.release()
+
+@app.get("/api/video-feed")
+def video_feed():
+    return StreamingResponse(
+        generate_video_stream(),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
 
 # ============================================================
 # API ROUTES
@@ -93,12 +162,7 @@ def list_cameras():
     return rows
 
 @app.get("/api/detections")
-def list_detections(
-    limit: int = 50,
-    offset: int = 0,
-    plate: Optional[str] = None,
-    camera_id: Optional[str] = None
-):
+def list_detections(limit: int = 50, offset: int = 0, plate: Optional[str] = None, camera_id: Optional[str] = None):
     conn = get_connection()
     cursor = conn.cursor()
     query = """
@@ -138,11 +202,7 @@ async def create_detection(item: DetectionInput):
     return res
 
 @app.get("/api/trajectory/{plate_number}")
-def get_trajectory(
-    plate_number: str,
-    start_time: Optional[str] = None,
-    end_time: Optional[str] = None
-):
+def get_trajectory(plate_number: str, start_time: Optional[str] = None, end_time: Optional[str] = None):
     res = reconstruct_trajectory(plate_number, start_time, end_time)
     return res
 
@@ -200,7 +260,6 @@ def remove_blacklist(plate_number: str):
     conn.close()
     return {"status": "success", "message": f"Plate {plate} removed from blacklist"}
 
-# Security Alerts
 @app.get("/api/alerts")
 def get_alerts(limit: int = 50):
     conn = get_connection()
@@ -372,18 +431,15 @@ def export_dossier(plate_number: str):
     """
     return html
 
-# WebSocket Endpoint
 @app.websocket("/ws/live")
 async def websocket_endpoint(websocket: WebSocket):
     await camera_manager.connect_websocket(websocket)
     try:
         while True:
-            # Keep connection alive
             data = await websocket.receive_text()
     except WebSocketDisconnect:
         camera_manager.disconnect_websocket(websocket)
 
-# Serve Frontend Index
 @app.get("/", response_class=FileResponse)
 def serve_index():
     index_file = FRONTEND_DIR / "index.html"

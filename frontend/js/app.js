@@ -4,31 +4,22 @@ class App {
         this.currentTab = 'live';
         this.ws = null;
         this.cameras = [];
+        this.liveFeedActive = false;
     }
 
     async init() {
-        // Initialize clock
         this.startClock();
-
-        // Initialize maps
         mapController.initMaps();
-
-        // Setup tabs
         this.setupTabNavigation();
-
-        // Connect WebSockets
         this.connectWebSocket();
 
-        // Load initial data
         await this.loadCameras();
         await this.loadKPIs();
         await this.loadRecentDetections();
         await this.loadRecentAlerts();
+        await this.loadModelStatus();
 
-        // Setup search & buttons
         this.setupEventListeners();
-
-        // Load initial trajectory for demo (e.g. DL01CA1234)
         this.searchTrajectory("DL01CA1234");
     }
 
@@ -57,7 +48,6 @@ class App {
     switchTab(tabName) {
         this.currentTab = tabName;
 
-        // Update button active state
         document.querySelectorAll(".tab-btn").forEach(btn => {
             if (btn.dataset.tab === tabName) {
                 btn.className = "tab-btn px-4 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-lg shadow-cyan-950/50";
@@ -66,7 +56,6 @@ class App {
             }
         });
 
-        // Toggle sections
         document.querySelectorAll(".tab-content").forEach(section => {
             if (section.id === `tab-${tabName}`) {
                 section.classList.remove("hidden");
@@ -75,10 +64,8 @@ class App {
             }
         });
 
-        // Trigger map resizes
         mapController.invalidateSize();
 
-        // Refresh tab-specific data
         if (tabName === "analytics") {
             this.loadAnalyticsTab();
         } else if (tabName === "security") {
@@ -121,7 +108,6 @@ class App {
         };
 
         this.ws.onclose = () => {
-            console.warn("WebSocket disconnected. Retrying in 3s...");
             const statusEl = document.getElementById("connection-status");
             if (statusEl) {
                 statusEl.innerHTML = `
@@ -134,7 +120,6 @@ class App {
     }
 
     handleNewDetection(detection) {
-        // Prepend to live ticker
         const ticker = document.getElementById("live-detection-ticker");
         if (ticker) {
             const card = document.createElement("div");
@@ -168,7 +153,6 @@ class App {
             }
         }
 
-        // Increment today's vehicle count KPI
         const totalEl = document.getElementById("kpi-total-detections");
         if (totalEl) {
             const curr = parseInt(totalEl.textContent) || 0;
@@ -185,14 +169,12 @@ class App {
             alert.severity || "CRITICAL"
         );
 
-        // Update active alerts KPI
         const alertsKpi = document.getElementById("kpi-active-alerts");
         if (alertsKpi) {
             const curr = parseInt(alertsKpi.textContent) || 0;
             alertsKpi.textContent = curr + 1;
         }
 
-        // Show banner in Live tab
         const banner = document.getElementById("urgent-alert-banner");
         if (banner) {
             banner.classList.remove("hidden");
@@ -200,11 +182,107 @@ class App {
         }
     }
 
+    async loadModelStatus() {
+        try {
+            const res = await fetch("/api/model/status");
+            const data = await res.json();
+            const modelInfoEl = document.getElementById("model-status-info");
+            if (modelInfoEl) {
+                modelInfoEl.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full ${data.model_loaded ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}"></span>
+                        <span class="font-mono font-bold text-xs text-slate-200">${data.model_file}</span>
+                        <span class="text-[10px] bg-cyan-950 text-cyan-400 px-2 py-0.5 rounded border border-cyan-800">${data.model_size_mb} MB</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400 mt-1">${data.architecture} &bull; ${data.ocr_engine}</div>
+                `;
+            }
+        } catch (e) {
+            console.error("Failed to load model status", e);
+        }
+    }
+
+    toggleLiveWebcamStream() {
+        const feedImg = document.getElementById("live-webcam-feed-img");
+        const placeholder = document.getElementById("live-webcam-placeholder");
+        const btn = document.getElementById("btn-toggle-webcam");
+
+        this.liveFeedActive = !this.liveFeedActive;
+
+        if (this.liveFeedActive) {
+            feedImg.src = "/api/video-feed";
+            feedImg.classList.remove("hidden");
+            placeholder.classList.add("hidden");
+            btn.innerHTML = `<i data-lucide="video-off" class="w-4 h-4 text-red-400"></i><span>Stop Live YOLO Feed</span>`;
+            alertsManager.showToast("Live ANPR Stream Active", "Processing camera feed with plate_model.pt + EasyOCR", "INFO");
+        } else {
+            feedImg.src = "";
+            feedImg.classList.add("hidden");
+            placeholder.classList.remove("hidden");
+            btn.innerHTML = `<i data-lucide="video" class="w-4 h-4 text-cyan-400"></i><span>Start Live Webcam ANPR</span>`;
+        }
+        if (window.lucide) lucide.createIcons();
+    }
+
+    async inspectUploadedImage(file) {
+        if (!file) return;
+
+        const resultContainer = document.getElementById("inspector-results");
+        const resultImg = document.getElementById("inspector-annotated-img");
+        const platesList = document.getElementById("inspector-detected-plates");
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        alertsManager.showToast("Running ANPR Model", "Running plate_model.pt and OCR on uploaded file...", "INFO");
+
+        try {
+            const res = await fetch("/api/anpr/inspect-image", {
+                method: "POST",
+                body: formData
+            });
+            const data = await res.json();
+
+            if (!data.success) {
+                alert("Image processing failed: " + (data.error || "Unknown error"));
+                return;
+            }
+
+            resultContainer.classList.remove("hidden");
+            resultImg.src = data.annotated_image;
+
+            platesList.innerHTML = "";
+            if (data.plates_detected.length === 0) {
+                platesList.innerHTML = `<div class="text-xs text-amber-400 p-2 bg-amber-950/40 rounded border border-amber-800">No license plate localized in this image.</div>`;
+            } else {
+                data.plates_detected.forEach(p => {
+                    const card = document.createElement("div");
+                    card.className = "p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between";
+                    card.innerHTML = `
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase font-bold">Detected Plate</div>
+                            <div class="text-lg font-black font-mono text-cyan-300 tracking-wider">${p.plate_number}</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">YOLO Conf: <strong>${Math.round(p.detection_conf*100)}%</strong> &bull; OCR Conf: <strong>${Math.round(p.ocr_conf*100)}%</strong></div>
+                        </div>
+                        <button class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs" onclick="app.searchTrajectory('${p.plate_number}'); app.switchTab('trajectory')">
+                            Track Trajectory →
+                        </button>
+                    `;
+                    platesList.appendChild(card);
+                });
+            }
+
+            alertsManager.showToast("Inspection Complete", `Detected ${data.count} plate(s) with plate_model.pt!`, "INFO");
+        } catch (e) {
+            console.error("Inspect image error", e);
+            alert("Error running ANPR on image: " + e);
+        }
+    }
+
     async loadCameras() {
         try {
             const res = await fetch("/api/cameras");
             this.cameras = await res.json();
-            
             const onlineCount = this.cameras.filter(c => c.status === "ONLINE").length;
             const camKpi = document.getElementById("kpi-active-cameras");
             if (camKpi) camKpi.textContent = `${onlineCount} / ${this.cameras.length}`;
@@ -288,10 +366,8 @@ class App {
             notFoundEl.classList.add("hidden");
             contentEl.classList.remove("hidden");
 
-            // Render Trajectory on GIS Map
             mapController.renderTrajectory(data.waypoints, data.summary);
 
-            // Populate Summary Info
             const sum = data.summary;
             document.getElementById("traj-plate-title").textContent = sum.plate_number;
             document.getElementById("traj-vehicle-type").textContent = sum.vehicle_type;
@@ -300,7 +376,6 @@ class App {
             document.getElementById("traj-elapsed-time").textContent = `${sum.total_elapsed_minutes} mins`;
             document.getElementById("traj-total-sightings").textContent = `${sum.total_sightings} Nodes`;
 
-            // Anomaly Badge
             const anomalyBanner = document.getElementById("traj-anomaly-banner");
             if (sum.anomaly_count > 0) {
                 anomalyBanner.classList.remove("hidden");
@@ -309,7 +384,6 @@ class App {
                 anomalyBanner.classList.add("hidden");
             }
 
-            // Blacklist Flag
             const blacklistTag = document.getElementById("traj-blacklist-tag");
             if (sum.is_blacklisted) {
                 blacklistTag.classList.remove("hidden");
@@ -318,7 +392,6 @@ class App {
                 blacklistTag.classList.add("hidden");
             }
 
-            // Setup Export Dossier Button
             const exportBtn = document.getElementById("btn-export-dossier");
             if (exportBtn) {
                 exportBtn.onclick = () => {
@@ -326,7 +399,6 @@ class App {
                 };
             }
 
-            // Render Timeline List
             this.renderTimeline(data.waypoints);
 
         } catch (e) {
@@ -374,21 +446,11 @@ class App {
                 fetch("/api/analytics/hourly-trends").then(r => r.json())
             ]);
 
-            // Heatmap
             mapController.renderHeatmap(heatRes.heatmap_points, heatRes.camera_nodes);
-
-            // 24h Volume Chart
             analyticsCharts.renderHourlyVolume(trendsRes.hours, trendsRes.volumes);
-
-            // Vehicle Types
             analyticsCharts.renderVehicleTypes(trendsRes.vehicle_types);
-
-            // OD Corridors
             analyticsCharts.renderODCorridors(odRes.top_corridors);
-
-            // Bottlenecks
             analyticsCharts.renderBottlenecks(congRes);
-
         } catch (e) {
             console.error("Failed to load analytics tab", e);
         }
@@ -544,7 +606,6 @@ class App {
     }
 
     setupEventListeners() {
-        // Trajectory Search input Enter key
         const input = document.getElementById("traj-search-input");
         if (input) {
             input.addEventListener("keyup", (e) => {
@@ -552,28 +613,40 @@ class App {
             });
         }
 
-        // Quick Search buttons
         document.querySelectorAll(".quick-plate-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 this.searchTrajectory(btn.dataset.plate);
             });
         });
 
-        // Add Blacklist Form
         const blForm = document.getElementById("add-blacklist-form");
         if (blForm) {
             blForm.addEventListener("submit", (e) => this.addBlacklist(e));
         }
 
-        // Audio toggle button
         const audioBtn = document.getElementById("btn-toggle-audio");
         if (audioBtn) {
             audioBtn.addEventListener("click", () => {
                 alertsManager.soundEnabled = !alertsManager.soundEnabled;
                 audioBtn.innerHTML = alertsManager.soundEnabled
-                    ? `<i data-lucide="volume-2" class="w-4 h-4"></i><span>Audio Alerts ON</span>`
-                    : `<i data-lucide="volume-x" class="w-4 h-4 text-slate-500"></i><span class="text-slate-500">Audio Muted</span>`;
+                    ? `<i data-lucide="volume-2" class="w-4 h-4"></i>`
+                    : `<i data-lucide="volume-x" class="w-4 h-4 text-slate-500"></i>`;
                 if (window.lucide) lucide.createIcons();
+            });
+        }
+
+        const webcamBtn = document.getElementById("btn-toggle-webcam");
+        if (webcamBtn) {
+            webcamBtn.addEventListener("click", () => this.toggleLiveWebcamStream());
+        }
+
+        // File upload inspector
+        const fileInput = document.getElementById("anpr-file-upload");
+        if (fileInput) {
+            fileInput.addEventListener("change", (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    this.inspectUploadedImage(e.target.files[0]);
+                }
             });
         }
     }
