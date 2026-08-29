@@ -596,6 +596,26 @@ def log_to_excel(
             f"{now.strftime('%H:%M:%S')}"
         )
 
+        # Broadcast to City-Wide ANPR Command Center Backend
+        try:
+            import requests
+            requests.post(
+                "http://localhost:8000/api/detections",
+                json={
+                    "plate_number": plate_number,
+                    "camera_id": "CAM-01",
+                    "detection_conf": float(round(detection_confidence, 3)),
+                    "ocr_conf": float(round(ocr_confidence, 3)),
+                    "vehicle_type": "Live Camera Feed",
+                    "speed_kmh": 45.0,
+                    "snapshot_path": str(snapshot_path),
+                    "raw_text": plate_number
+                },
+                timeout=0.3
+            )
+        except Exception:
+            pass
+
     except PermissionError:
         print(
             "\nERROR: Excel file is open."

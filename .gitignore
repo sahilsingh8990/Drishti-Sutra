@@ -1,4 +1,4 @@
-﻿# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -18,6 +18,9 @@ output/
 
 # Generated vehicle data / outputs
 vehicle_data.xlsx
+data/
+*.db
+*.sqlite3
 
 # Datasets (large image archives)
 dataset/
