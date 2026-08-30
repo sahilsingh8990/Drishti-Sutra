@@ -606,7 +606,7 @@ def log_to_excel(
                     "camera_id": "CAM-01",
                     "detection_conf": float(round(detection_confidence, 3)),
                     "ocr_conf": float(round(ocr_confidence, 3)),
-                    "vehicle_type": "Live Camera Feed",
+                    "vehicle_type": f"Live Camera ({square})",
                     "speed_kmh": 45.0,
                     "snapshot_path": str(snapshot_path),
                     "raw_text": plate_number
@@ -614,7 +614,20 @@ def log_to_excel(
                 timeout=0.3
             )
         except Exception:
-            pass
+            try:
+                from backend.camera_manager import camera_manager
+                camera_manager.record_detection_sync(
+                    plate_number=plate_number,
+                    camera_id="CAM-01",
+                    detection_conf=float(round(detection_confidence, 3)),
+                    ocr_conf=float(round(ocr_confidence, 3)),
+                    vehicle_type=f"Live Camera ({square})",
+                    speed_kmh=45.0,
+                    snapshot_path=str(snapshot_path),
+                    raw_text=plate_number
+                )
+            except Exception:
+                pass
 
     except PermissionError:
         print(

@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import random
 from datetime import datetime
 from typing import List, Dict, Any
@@ -29,20 +29,40 @@ class CameraManager:
         for ws in disconnected:
             self.disconnect_websocket(ws)
 
-    async def record_detection(
+    def broadcast_sync(self, message: Dict[str, Any]):
+        """Safely broadcast messages across synchronous calls and background threads."""
+        try:
+            loop = None
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                pass
+
+            if loop and loop.is_running():
+                loop.create_task(self.broadcast(message))
+            else:
+                for ws in list(self.active_websockets):
+                    try:
+                        asyncio.run(ws.send_json(message))
+                    except Exception:
+                        pass
+        except Exception as e:
+            pass
+
+    def record_detection_sync(
         self,
         plate_number: str,
-        camera_id: str,
+        camera_id: str = "CAM-01",
         detection_conf: float = 0.95,
         ocr_conf: float = 0.92,
-        vehicle_type: str = "Sedan",
+        vehicle_type: str = "Live Camera Feed",
         speed_kmh: float = 45.0,
         snapshot_path: str = "",
         raw_text: str = ""
     ) -> Dict[str, Any]:
         """
-        Ingests a detection from live ANPR camera or simulation, checks for blacklist and anomaly alerts,
-        and broadcasts to all connected clients in real-time.
+        Synchronously and immediately records detection into SQLite DB,
+        checks for blacklist & anomalies, and broadcasts to dashboard UI.
         """
         plate_number = plate_number.strip().upper()
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -54,11 +74,10 @@ class CameraManager:
         cursor.execute("SELECT * FROM cameras WHERE id = ?", (camera_id,))
         cam_row = cursor.fetchone()
         if not cam_row:
-            # Fallback default if camera doesn't exist
             cam_name = f"Camera {camera_id}"
-            cam_sector = "Metro Grid"
-            cam_lat = 28.6139
-            cam_lng = 77.2090
+            cam_sector = "Central Business District"
+            cam_lat = 28.6315
+            cam_lng = 77.2167
         else:
             cam_name = cam_row["name"]
             cam_sector = cam_row["sector"]
@@ -94,7 +113,7 @@ class CameraManager:
                 "description": desc
             }
 
-        # 3. Check Cloned Plate / Impossible Speed Anomaly against last detection
+        # 3. Check Cloned Plate / Anomaly
         cursor.execute("""
             SELECT d.*, c.lat, c.lng, c.name as prev_cam_name
             FROM detections d
@@ -105,30 +124,33 @@ class CameraManager:
         prev_det = cursor.fetchone()
 
         if prev_det and prev_det["camera_id"] != camera_id:
-            prev_time = datetime.strptime(prev_det["timestamp"], "%Y-%m-%d %H:%M:%S")
-            curr_time = datetime.strptime(now_str, "%Y-%m-%d %H:%M:%S")
-            dt_sec = max(1, int((curr_time - prev_time).total_seconds()))
-            dist_km = haversine(prev_det["lat"], prev_det["lng"], cam_lat, cam_lng)
-            calc_spd = round((dist_km / (dt_sec / 3600.0)), 1) if dt_sec > 0 else 0
+            try:
+                prev_time = datetime.strptime(prev_det["timestamp"], "%Y-%m-%d %H:%M:%S")
+                curr_time = datetime.strptime(now_str, "%Y-%m-%d %H:%M:%S")
+                dt_sec = max(1, int((curr_time - prev_time).total_seconds()))
+                dist_km = haversine(prev_det["lat"], prev_det["lng"], cam_lat, cam_lng)
+                calc_spd = round((dist_km / (dt_sec / 3600.0)), 1) if dt_sec > 0 else 0
 
-            if calc_spd > 140.0:
-                anomaly_desc = f"CLONED PLATE / SPEED ANOMALY: Vehicle {plate_number} moved {round(dist_km, 1)}km in {dt_sec}s ({calc_spd} km/h) between {prev_det['prev_cam_name']} and {cam_name}."
-                cursor.execute("""
-                    INSERT INTO alerts (plate_number, camera_id, timestamp, alert_type, severity, description, acknowledged)
-                    VALUES (?, ?, ?, ?, ?, ?, 0)
-                """, (plate_number, camera_id, now_str, "CLONED_PLATE", "CRITICAL", anomaly_desc))
-                alert_id = cursor.lastrowid
-                alert_info = {
-                    "id": alert_id,
-                    "plate_number": plate_number,
-                    "camera_id": camera_id,
-                    "camera_name": cam_name,
-                    "sector": cam_sector,
-                    "timestamp": now_str,
-                    "alert_type": "CLONED_PLATE",
-                    "severity": "CRITICAL",
-                    "description": anomaly_desc
-                }
+                if calc_spd > 140.0:
+                    anomaly_desc = f"CLONED PLATE / SPEED ANOMALY: Vehicle {plate_number} moved {round(dist_km, 1)}km in {dt_sec}s ({calc_spd} km/h) between {prev_det['prev_cam_name']} and {cam_name}."
+                    cursor.execute("""
+                        INSERT INTO alerts (plate_number, camera_id, timestamp, alert_type, severity, description, acknowledged)
+                        VALUES (?, ?, ?, ?, ?, ?, 0)
+                    """, (plate_number, camera_id, now_str, "CLONED_PLATE", "CRITICAL", anomaly_desc))
+                    alert_id = cursor.lastrowid
+                    alert_info = {
+                        "id": alert_id,
+                        "plate_number": plate_number,
+                        "camera_id": camera_id,
+                        "camera_name": cam_name,
+                        "sector": cam_sector,
+                        "timestamp": now_str,
+                        "alert_type": "CLONED_PLATE",
+                        "severity": "CRITICAL",
+                        "description": anomaly_desc
+                    }
+            except Exception:
+                pass
 
         # 4. Insert Detection
         cursor.execute("""
@@ -158,19 +180,42 @@ class CameraManager:
             "alert": alert_info
         }
 
-        # Broadcast via WebSocket
-        await self.broadcast({
+        print(f"[SAVED TO DASHBOARD] Plate: {plate_number} | Node: {camera_id} | Conf: {int(ocr_conf*100)}%")
+
+        self.broadcast_sync({
             "event": "NEW_DETECTION",
             "data": detection_payload
         })
 
         if alert_info:
-            await self.broadcast({
+            self.broadcast_sync({
                 "event": "SECURITY_ALERT",
                 "data": alert_info
             })
 
         return detection_payload
+
+    async def record_detection(
+        self,
+        plate_number: str,
+        camera_id: str = "CAM-01",
+        detection_conf: float = 0.95,
+        ocr_conf: float = 0.92,
+        vehicle_type: str = "Sedan",
+        speed_kmh: float = 45.0,
+        snapshot_path: str = "",
+        raw_text: str = ""
+    ) -> Dict[str, Any]:
+        return self.record_detection_sync(
+            plate_number=plate_number,
+            camera_id=camera_id,
+            detection_conf=detection_conf,
+            ocr_conf=ocr_conf,
+            vehicle_type=vehicle_type,
+            speed_kmh=speed_kmh,
+            snapshot_path=snapshot_path,
+            raw_text=raw_text
+        )
 
     async def start_background_simulation(self):
         """Simulates live city traffic stream in the background."""

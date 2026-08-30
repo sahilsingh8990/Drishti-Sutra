@@ -318,12 +318,45 @@ def save_plate(plate, square):
         EXCEL_FILE
     )
 
-
     print()
     print(
         f"SAVED: {plate} | {square}"
     )
     print()
+
+    # --------------------------------------------------------
+    # SYNC WITH DRISHTI-SUTRA COMMAND CENTER DASHBOARD
+    # --------------------------------------------------------
+    try:
+        import requests
+        requests.post(
+            "http://localhost:8000/api/detections",
+            json={
+                "plate_number": plate,
+                "camera_id": "CAM-01",
+                "detection_conf": 0.95,
+                "ocr_conf": 0.92,
+                "vehicle_type": f"Live Camera ({square})",
+                "speed_kmh": 45.0,
+                "snapshot_path": "",
+                "raw_text": plate
+            },
+            timeout=0.4
+        )
+    except Exception:
+        # Direct SQLite database fallback
+        try:
+            from backend.camera_manager import camera_manager
+            camera_manager.record_detection_sync(
+                plate_number=plate,
+                camera_id="CAM-01",
+                detection_conf=0.95,
+                ocr_conf=0.92,
+                vehicle_type=f"Live Camera ({square})",
+                speed_kmh=45.0
+            )
+        except Exception:
+            pass
 
 
 # ============================================================
