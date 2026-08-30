@@ -1,97 +1,290 @@
-﻿/* Custom styles for ANPR Command Center */
+/* ============================================================
+   DRISHTI-SUTRA INTEGRATED TRAFFIC COMMAND CENTRE (ICCC)
+   Professional Design System & Operational Visual Theme
+   ============================================================ */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-    --bg-dark: #090d16;
-    --card-bg: #111827;
-    --card-border: #1f293d;
-    --accent-blue: #0284c7;
-    --accent-cyan: #06b6d4;
-    --accent-red: #ef4444;
-    --accent-green: #10b981;
-    --accent-amber: #f59e0b;
+    /* Operational Color Tokens (Semantic & Restrained) */
+    --bg-main: #090d16;
+    --bg-surface: #0f172a;
+    --bg-surface-elevated: #162032;
+    --bg-header: #0a0e18;
+    --bg-sidebar: #0b0f1a;
+
+    --border-subtle: #1e293b;
+    --border-medium: #334155;
+    --border-strong: #475569;
+
+    --text-heading: #f8fafc;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+
+    /* Semantic Accent Colors */
+    --op-blue: #0284c7;
+    --op-blue-glow: rgba(2, 132, 199, 0.25);
+    --op-green: #10b981;
+    --op-green-bg: rgba(16, 185, 129, 0.12);
+    --op-amber: #f59e0b;
+    --op-amber-bg: rgba(245, 158, 11, 0.12);
+    --op-red: #ef4444;
+    --op-red-bg: rgba(239, 68, 68, 0.15);
+    --op-purple: #8b5cf6;
+    --op-purple-bg: rgba(139, 92, 246, 0.15);
 }
 
 body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-dark);
-    color: #f3f4f6;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 .font-mono {
     font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -0.02em;
 }
 
-/* Glassmorphism */
-.glass-panel {
-    background: rgba(17, 24, 39, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+/* ============================================================
+   OPERATIONAL PANELS & CARDS (Restrained & Information-Dense)
+   ============================================================ */
+
+.op-panel {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.glass-card {
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+.op-panel-header {
+    padding: 10px 14px;
+    background-color: rgba(10, 14, 24, 0.6);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-/* Radar scan effect */
-.radar-pulse {
-    position: relative;
+.op-panel-body {
+    padding: 14px;
 }
-.radar-pulse::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
+
+.op-card {
+    background-color: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 12px;
+    transition: all 0.15s ease-in-out;
+}
+.op-card:hover {
+    border-color: var(--border-medium);
+}
+
+/* Operational Stat Box */
+.op-stat-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 10px 14px;
+}
+
+/* ============================================================
+   COMPACT DATA TABLES & LISTS
+   ============================================================ */
+
+.op-table-container {
     width: 100%;
-    height: 100%;
-    transform: translate(-50%, -50%);
+    overflow-x: auto;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+}
+
+.op-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+}
+
+.op-table th {
+    background-color: rgba(15, 23, 42, 0.95);
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap;
+}
+
+.op-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.op-table tr:hover {
+    background-color: rgba(30, 41, 59, 0.5);
+}
+
+/* ============================================================
+   BUTTONS & INPUT CONTROLS (Smooth Feedback 150ms)
+   ============================================================ */
+
+.op-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid var(--border-medium);
+    background-color: rgba(30, 41, 59, 0.8);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+.op-btn:hover {
+    background-color: #334155;
+    border-color: var(--border-strong);
+    color: #ffffff;
+}
+.op-btn:active {
+    transform: scale(0.98);
+}
+.op-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.6);
+}
+
+.op-btn-primary {
+    background-color: #0284c7;
+    border-color: #0369a1;
+    color: #ffffff;
+}
+.op-btn-primary:hover {
+    background-color: #0369a1;
+    border-color: #075985;
+}
+
+.op-btn-purple {
+    background-color: #7c3aed;
+    border-color: #6d28d9;
+    color: #ffffff;
+}
+.op-btn-purple:hover {
+    background-color: #6d28d9;
+    border-color: #5b21b6;
+}
+
+.op-btn-danger {
+    background-color: #dc2626;
+    border-color: #b91c1c;
+    color: #ffffff;
+}
+.op-btn-danger:hover {
+    background-color: #b91c1c;
+}
+
+.op-input {
+    width: 100%;
+    background-color: rgba(10, 14, 24, 0.9);
+    border: 1px solid var(--border-medium);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--text-heading);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.op-input:focus {
+    outline: none;
+    border-color: var(--op-blue);
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25);
+}
+
+/* ============================================================
+   STATUS BADGES & INDICATORS
+   ============================================================ */
+
+.op-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid transparent;
+}
+
+.op-badge-online {
+    background-color: var(--op-green-bg);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.op-badge-offline {
+    background-color: var(--op-red-bg);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.op-badge-warning {
+    background-color: var(--op-amber-bg);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.op-badge-watching {
+    background-color: var(--op-purple-bg);
+    color: #c084fc;
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
+/* Status Indicator Dot */
+.status-dot {
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    border: 2px solid rgba(16, 185, 129, 0.6);
-    animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    display: inline-block;
 }
-
-@keyframes pulse-ring {
-    0% {
-        width: 10px;
-        height: 10px;
-        opacity: 1;
-    }
-    100% {
-        width: 35px;
-        height: 35px;
-        opacity: 0;
-    }
-}
-
-/* Animated HUD lines */
-.hud-grid {
-    background-size: 30px 30px;
-    background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-}
+.status-dot.online { background-color: #10b981; }
+.status-dot.offline { background-color: #ef4444; }
+.status-dot.degraded { background-color: #f59e0b; }
+.status-dot.watching { background-color: #a855f7; }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
 }
 ::-webkit-scrollbar-track {
-    background: #0b0f19;
+    background: #090d16;
 }
 ::-webkit-scrollbar-thumb {
-    background: #1f293d;
-    border-radius: 4px;
+    background: #1e293b;
+    border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #38bdf8;
+    background: #334155;
 }
 
-/* Custom Leaflet Map styling */
+/* ============================================================
+   MAP & WAYPOINT STYLING (Restrained Operational Markers)
+   ============================================================ */
+
 .leaflet-container {
     background-color: #0b0f19 !important;
 }
@@ -102,31 +295,56 @@ body {
     justify-content: center;
     background: #0284c7;
     color: #ffffff;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 11px;
     border-radius: 50%;
     border: 2px solid #ffffff;
-    box-shadow: 0 0 15px rgba(2, 132, 199, 0.9);
+    box-shadow: 0 0 10px rgba(2, 132, 199, 0.8);
 }
 
 .custom-waypoint-icon.start {
     background: #10b981;
-    box-shadow: 0 0 18px rgba(16, 185, 129, 0.9);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
 }
 
 .custom-waypoint-icon.end {
     background: #f43f5e;
-    box-shadow: 0 0 18px rgba(244, 63, 94, 0.9);
+    box-shadow: 0 0 12px rgba(244, 63, 94, 0.8);
 }
 
-.custom-waypoint-icon.anomaly {
-    background: #e11d48;
-    animation: blink 1s infinite alternate;
+.custom-waypoint-icon.inferred {
+    background: #f59e0b;
+    border: 2px dashed #fbbf24;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+    opacity: 0.9;
 }
 
-@keyframes blink {
-    from { transform: scale(1); filter: drop-shadow(0 0 5px #ef4444); }
-    to { transform: scale(1.25); filter: drop-shadow(0 0 18px #ef4444); }
+.custom-waypoint-icon.predicted {
+    background: #8b5cf6;
+    border: 2px solid #c084fc;
+    box-shadow: 0 0 14px rgba(139, 92, 246, 0.9);
+}
+
+.custom-waypoint-icon.offline-node {
+    background: #475569;
+    border: 2px solid #ef4444;
+}
+
+/* Active Camera Watch Glow on CCTV Tiles */
+.watching-glow {
+    border: 2px solid #8b5cf6 !important;
+    box-shadow: 0 0 16px rgba(139, 92, 246, 0.35) !important;
+}
+
+.factor-chip {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 8px 10px;
+    transition: border-color 0.15s ease;
+}
+.factor-chip:hover {
+    border-color: var(--border-medium);
 }
 
 /* Leaflet Popup Dark Theme */
@@ -134,9 +352,11 @@ body {
     background: #0f172a !important;
     color: #f8fafc !important;
     border: 1px solid #334155 !important;
-    border-radius: 8px !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6) !important;
 }
 .leaflet-popup-tip {
     background: #0f172a !important;
 }
+
+

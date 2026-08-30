@@ -1,4 +1,4 @@
-﻿import sqlite3
+import sqlite3
 import os
 from pathlib import Path
 from datetime import datetime
@@ -79,6 +79,64 @@ def init_db():
 
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_alerts_plate ON alerts(plate_number)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_alerts_time ON alerts(timestamp)")
+
+    # Vehicle Identities Table (Confidence-Aware Multi-Camera Resolution)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS vehicle_identities (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            track_id TEXT UNIQUE,
+            resolved_plate TEXT NOT NULL,
+            raw_ocr_last TEXT,
+            identity_confidence REAL DEFAULT 0.90,
+            candidate_distribution TEXT,
+            vehicle_type TEXT DEFAULT 'Sedan',
+            last_camera_id TEXT,
+            sightings_count INTEGER DEFAULT 1,
+            first_seen TEXT,
+            last_seen TEXT
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_identities_plate ON vehicle_identities(resolved_plate)")
+
+    # Active Camera Handoffs Table (Software-Level Watch Queue)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS active_handoffs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            handoff_id TEXT UNIQUE,
+            vehicle_plate TEXT NOT NULL,
+            source_camera_id TEXT NOT NULL,
+            target_camera_id TEXT NOT NULL,
+            probability REAL,
+            eta_min_sec INTEGER,
+            eta_max_sec INTEGER,
+            priority TEXT DEFAULT 'NORMAL',
+            status TEXT DEFAULT 'WATCHING',
+            factors_json TEXT,
+            created_at TEXT,
+            expires_at TEXT,
+            reacquired_at TEXT
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_handoffs_target ON active_handoffs(target_camera_id, status)")
+
+    # Reacquisition Evaluation Logs Table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reacquisition_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            handoff_id TEXT,
+            vehicle_plate TEXT NOT NULL,
+            incoming_plate TEXT,
+            predicted_camera_id TEXT,
+            actual_camera_id TEXT,
+            was_correct INTEGER,
+            probability REAL,
+            expected_eta_sec INTEGER,
+            actual_transit_sec INTEGER,
+            eta_error_sec INTEGER,
+            timestamp TEXT
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_reacq_plate ON reacquisition_logs(vehicle_plate)")
 
     conn.commit()
     conn.close()

@@ -1,4 +1,4 @@
-﻿from collections import defaultdict
+from collections import defaultdict
 from datetime import datetime
 from backend.database import get_connection
 
@@ -213,7 +213,7 @@ def get_congestion_bottlenecks():
 
     return sorted(bottlenecks, key=lambda x: x["risk_score"], reverse=True)
 
-def get_hourly_volume_trends():
+def get_hourly_volume():
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -223,31 +223,168 @@ def get_hourly_volume_trends():
         GROUP BY hour_str
         ORDER BY hour_str ASC
     """)
-    hour_rows = cursor.fetchall()
+    rows = cursor.fetchall()
+    conn.close()
 
     hourly_dict = {f"{h:02d}:00": 0 for h in range(24)}
-    for r in hour_rows:
+    for r in rows:
         if r["hour_str"]:
             hourly_dict[f"{int(r['hour_str']):02d}:00"] = r["cnt"]
 
-    # Vehicle types distribution
-    cursor.execute("""
-        SELECT vehicle_type, COUNT(*) as cnt
-        FROM detections
-        GROUP BY vehicle_type
-        ORDER BY cnt DESC
-    """)
-    type_rows = cursor.fetchall()
-    vtypes = {r["vehicle_type"]: r["cnt"] for r in type_rows}
+    return {
+        "hours": [{"hour": h, "count": cnt} for h, cnt in hourly_dict.items()]
+    }
 
+def get_speed_distribution():
+    from backend.trajectory_engine import haversine
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT d.plate_number, d.camera_id, d.timestamp, c.lat, c.lng
+        FROM detections d
+        JOIN cameras c ON d.camera_id = c.id
+        ORDER BY d.plate_number, d.timestamp ASC
+    """)
+    rows = cursor.fetchall()
     conn.close()
 
+    bins = {
+        "0-20 km/h": 0,
+        "21-40 km/h": 0,
+        "41-60 km/h": 0,
+        "61-80 km/h": 0,
+        "81-100 km/h": 0,
+        "100+ km/h": 0
+    }
+
+    vehicle_tracks = defaultdict(list)
+    for r in rows:
+        vehicle_tracks[r["plate_number"]].append(dict(r))
+
+    valid_samples = 0
+    for plate, track in vehicle_tracks.items():
+        for i in range(1, len(track)):
+            prev = track[i - 1]
+            curr = track[i]
+
+            # Exclude duplicate detections from the exact same camera node
+            if prev["camera_id"] == curr["camera_id"]:
+                continue
+
+            try:
+                t_prev = datetime.strptime(prev["timestamp"], "%Y-%m-%d %H:%M:%S")
+                t_curr = datetime.strptime(curr["timestamp"], "%Y-%m-%d %H:%M:%S")
+                duration_sec = (t_curr - t_prev).total_seconds()
+
+                if duration_sec <= 0:
+                    continue
+
+                dist_km = haversine(prev["lat"], prev["lng"], curr["lat"], curr["lng"])
+                if dist_km <= 0:
+                    continue
+
+                speed_kmh = round(dist_km / (duration_sec / 3600.0), 1)
+
+                if 0 < speed_kmh <= 250:
+                    valid_samples += 1
+                    if speed_kmh <= 20:
+                        bins["0-20 km/h"] += 1
+                    elif speed_kmh <= 40:
+                        bins["21-40 km/h"] += 1
+                    elif speed_kmh <= 60:
+                        bins["41-60 km/h"] += 1
+                    elif speed_kmh <= 80:
+                        bins["61-80 km/h"] += 1
+                    elif speed_kmh <= 100:
+                        bins["81-100 km/h"] += 1
+                    else:
+                        bins["100+ km/h"] += 1
+            except Exception:
+                continue
+
     return {
-        "hours": list(hourly_dict.keys()),
-        "volumes": list(hourly_dict.values()),
-        "vehicle_types": vtypes
+        "bins": [{"range": k, "count": v} for k, v in bins.items()],
+        "total_valid_samples": valid_samples
+    }
+
+def get_camera_density():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM detections")
+    total_network = cursor.fetchone()[0] or 1
+
+    cursor.execute("""
+        SELECT c.id AS camera_id, c.name AS location, c.sector,
+               COUNT(d.id) AS vehicle_count,
+               AVG(d.speed_kmh) AS avg_speed
+        FROM cameras c
+        LEFT JOIN detections d ON c.id = d.camera_id
+        GROUP BY c.id
+        ORDER BY vehicle_count DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    max_count = max([r["vehicle_count"] for r in rows]) if rows else 1
+
+    cameras = []
+    for r in rows:
+        count = r["vehicle_count"]
+        pct = round((count / total_network) * 100, 1) if total_network > 0 else 0.0
+
+        if count >= max_count * 0.75:
+            level = "SEVERE"
+            badge = "bg-red-500/20 text-red-400 border-red-500/40"
+        elif count >= max_count * 0.45:
+            level = "HIGH"
+            badge = "bg-amber-500/20 text-amber-400 border-amber-500/40"
+        elif count >= max_count * 0.20:
+            level = "MODERATE"
+            badge = "bg-sky-500/20 text-sky-400 border-sky-500/40"
+        else:
+            level = "LOW"
+            badge = "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+
+        cameras.append({
+            "camera_id": r["camera_id"],
+            "location": r["location"],
+            "sector": r["sector"],
+            "vehicle_count": count,
+            "traffic_percentage": pct,
+            "traffic_level": level,
+            "badge": badge
+        })
+
+    return {
+        "cameras": cameras,
+        "total_network_traffic": total_network
+    }
+
+def get_hourly_volume_trends():
+    vol_data = get_hourly_volume()
+    speed_data = get_speed_distribution()
+    cam_data = get_camera_density()
+
+    hours = [h["hour"] for h in vol_data["hours"]]
+    volumes = [h["count"] for h in vol_data["hours"]]
+
+    speed_dist = {b["range"]: b["count"] for b in speed_data["bins"]}
+    camera_density = [{
+        "id": c["camera_id"],
+        "name": c["location"].replace(" Square", "").replace(" Interchange", "").replace(" Flyover", ""),
+        "count": c["vehicle_count"]
+    } for c in cam_data["cameras"]]
+
+    return {
+        "hours": hours,
+        "volumes": volumes,
+        "speed_distribution": speed_dist,
+        "camera_density": camera_density
     }
 
 if __name__ == "__main__":
     print("KPIs:", get_overview_kpis())
     print("OD Corridors:", get_od_matrix()["top_corridors"][:3])
+

@@ -64,8 +64,27 @@ class CameraManager:
         Synchronously and immediately records detection into SQLite DB,
         checks for blacklist & anomalies, and broadcasts to dashboard UI.
         """
-        plate_number = plate_number.strip().upper()
+        raw_text = raw_text or plate_number
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Resolve vehicle identity early via Confidence-Aware Identity Engine
+        from backend.identity_engine import identity_engine
+        resolved_entity = identity_engine.resolve_or_update_identity(
+            raw_ocr=plate_number,
+            camera_id=camera_id,
+            detection_conf=detection_conf,
+            ocr_conf=ocr_conf,
+            vehicle_type=vehicle_type,
+            timestamp=now_str
+        )
+        resolved_plate = resolved_entity.get("resolved_plate", plate_number)
+        plate_number = resolved_plate
+
+        # Enforce strict Indian Standard State or Bharat Series format
+        is_valid_indian, fmt_type = identity_engine.validate_indian_structure(plate_number)
+        if not is_valid_indian:
+            print(f"[REJECTED NON-INDIAN FORMAT] Raw: {raw_text} | Normalized: {plate_number} | Format: {fmt_type}")
+            return {}
 
         conn = get_connection()
         cursor = conn.cursor()
@@ -84,9 +103,21 @@ class CameraManager:
             cam_lat = cam_row["lat"]
             cam_lng = cam_row["lng"]
 
-        # 2. Check Blacklist
-        cursor.execute("SELECT * FROM blacklist WHERE plate_number = ? AND active = 1", (plate_number,))
-        b_row = cursor.fetchone()
+        # 2. Check Blacklist (Exact Match & Fuzzy OCR Similarity Match)
+        cursor.execute("SELECT * FROM blacklist WHERE active = 1")
+        all_blacklist_rows = cursor.fetchall()
+        b_row = None
+        for r in all_blacklist_rows:
+            if r["plate_number"] == plate_number:
+                b_row = r
+                break
+            else:
+                sim = identity_engine.plate_similarity(plate_number, r["plate_number"])
+                if sim >= 0.70:
+                    b_row = r
+                    plate_number = r["plate_number"]  # Correct noisy OCR variant to Watchlist target
+                    break
+
         alert_info = None
 
         if b_row:
@@ -152,19 +183,116 @@ class CameraManager:
             except Exception:
                 pass
 
-        # 4. Insert Detection
+        # 4. Evaluate Downstream Reacquisition against Active Watch Queue
+        reacq_eval = None
+        try:
+            from backend.predictive_handoff_engine import predictive_engine
+            reacq_eval = predictive_engine.evaluate_reacquisition(
+                incoming_plate=plate_number,
+                incoming_camera_id=camera_id,
+                incoming_conf=ocr_conf,
+                vehicle_type=vehicle_type,
+                timestamp=now_str
+            )
+            if reacq_eval:
+                cursor.execute("""
+                    INSERT INTO reacquisition_logs (handoff_id, vehicle_plate, incoming_plate, predicted_camera_id, actual_camera_id, was_correct, probability, expected_eta_sec, actual_transit_sec, eta_error_sec, timestamp)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    reacq_eval["handoff_id"],
+                    reacq_eval["vehicle_plate"],
+                    reacq_eval["incoming_plate"],
+                    reacq_eval["predicted_camera"],
+                    reacq_eval["actual_camera"],
+                    1 if reacq_eval["was_correct"] else 0,
+                    reacq_eval["prediction_confidence"],
+                    reacq_eval["expected_eta_sec"],
+                    reacq_eval["actual_transit_sec"],
+                    reacq_eval["eta_error_sec"],
+                    now_str
+                ))
+        except Exception as e:
+            print(f"Reacquisition eval notice: {e}")
+
+        # 5. Generate Predictive Handoffs & Next Camera Rankings
+        predictive_info = None
+        created_handoffs = []
+        try:
+            from backend.predictive_handoff_engine import predictive_engine
+            predictive_info = predictive_engine.predict_next_cameras(
+                plate_number=plate_number,
+                current_camera_id=camera_id,
+                detection_conf=detection_conf,
+                ocr_conf=ocr_conf,
+                vehicle_type=vehicle_type,
+                is_blacklisted=b_row is not None,
+                speed_kmh=speed_kmh
+            )
+
+            created_handoffs = predictive_engine.dispatch_active_handoffs(
+                plate_number=predictive_info["resolved_plate"],
+                current_camera_id=camera_id,
+                predictions=predictive_info["predictions"],
+                is_blacklisted=b_row is not None,
+                vehicle_type=vehicle_type
+            )
+
+            # Record handoffs to database
+            for h in created_handoffs:
+                import json
+                cursor.execute("""
+                    INSERT OR REPLACE INTO active_handoffs (handoff_id, vehicle_plate, source_camera_id, target_camera_id, probability, eta_min_sec, eta_max_sec, priority, status, factors_json, created_at, expires_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    h["handoff_id"],
+                    h["vehicle_plate"],
+                    h["source_camera_id"],
+                    h["target_camera_id"],
+                    h["probability"],
+                    h["eta_min_sec"],
+                    h["eta_max_sec"],
+                    h["priority"],
+                    h["status"],
+                    json.dumps(predictive_info.get("predictions", [{}])[0].get("explainability_factors", [])),
+                    h["created_at"],
+                    h["expires_at"]
+                ))
+        except Exception as e:
+            print(f"Predictive handoff notice: {e}")
+
+        # 6. Upsert Detection Record (Prevent duplicate cards for consecutive webcam frames of same vehicle)
         cursor.execute("""
-            INSERT INTO detections (plate_number, camera_id, timestamp, detection_conf, ocr_conf, vehicle_type, speed_kmh, snapshot_path, raw_text)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (plate_number, camera_id, now_str, detection_conf, ocr_conf, vehicle_type, speed_kmh, snapshot_path, raw_text))
-        det_id = cursor.lastrowid
+            SELECT id FROM detections 
+            WHERE plate_number = ? AND camera_id = ?
+            ORDER BY id DESC LIMIT 1
+        """, (plate_number, camera_id))
+        existing_det = cursor.fetchone()
+
+        if existing_det:
+            det_id = existing_det["id"]
+            cursor.execute("""
+                UPDATE detections 
+                SET timestamp = ?, detection_conf = ?, ocr_conf = ?, raw_text = ?
+                WHERE id = ?
+            """, (now_str, max(detection_conf, 0.90), max(ocr_conf, 0.90), raw_text, det_id))
+        else:
+            cursor.execute("""
+                INSERT INTO detections (plate_number, camera_id, timestamp, detection_conf, ocr_conf, vehicle_type, speed_kmh, snapshot_path, raw_text)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (plate_number, camera_id, now_str, detection_conf, ocr_conf, vehicle_type, speed_kmh, snapshot_path, raw_text))
+            det_id = cursor.lastrowid
 
         conn.commit()
         conn.close()
 
+        resolved_plate = predictive_info["resolved_plate"] if predictive_info else plate_number
+        candidate_identities = predictive_info["candidate_identities"] if predictive_info else []
+
         detection_payload = {
             "id": det_id,
-            "plate_number": plate_number,
+            "plate_number": resolved_plate,
+            "raw_plate": plate_number,
+            "candidate_identities": candidate_identities,
             "camera_id": camera_id,
             "camera_name": cam_name,
             "sector": cam_sector,
@@ -177,10 +305,12 @@ class CameraManager:
             "speed_kmh": speed_kmh,
             "snapshot_path": snapshot_path,
             "is_blacklisted": b_row is not None,
-            "alert": alert_info
+            "alert": alert_info,
+            "predictive_info": predictive_info,
+            "reacquisition_eval": reacq_eval
         }
 
-        print(f"[SAVED TO DASHBOARD] Plate: {plate_number} | Node: {camera_id} | Conf: {int(ocr_conf*100)}%")
+        print(f"[SAVED TO DASHBOARD] Plate: {resolved_plate} (Raw: {plate_number}) | Node: {camera_id} | Conf: {int(ocr_conf*100)}%")
 
         self.broadcast_sync({
             "event": "NEW_DETECTION",
@@ -191,6 +321,22 @@ class CameraManager:
             self.broadcast_sync({
                 "event": "SECURITY_ALERT",
                 "data": alert_info
+            })
+
+        if reacq_eval:
+            self.broadcast_sync({
+                "event": "HANDOFF_REACQUIRED",
+                "data": reacq_eval
+            })
+
+        if created_handoffs:
+            self.broadcast_sync({
+                "event": "HANDOFF_CREATED",
+                "data": {
+                    "source_camera": camera_id,
+                    "vehicle_plate": resolved_plate,
+                    "handoffs": created_handoffs
+                }
             })
 
         return detection_payload

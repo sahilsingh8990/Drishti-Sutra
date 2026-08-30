@@ -1,12 +1,13 @@
-﻿// Analytics Chart.js and Data Visualizations
+// Analytics Chart.js and Data Visualizations
 class AnalyticsCharts {
     constructor() {
         this.hourlyChart = null;
-        this.vehicleTypeChart = null;
+        this.speedChart = null;
+        this.cameraTrafficChart = null;
     }
 
     renderHourlyVolume(hours, volumes) {
-        const ctx = document.getElementById("hourly-volume-chart");
+        const ctx = document.getElementById("chart-volume") || document.getElementById("hourly-volume-chart");
         if (!ctx) return;
 
         if (this.hourlyChart) {
@@ -62,108 +63,115 @@ class AnalyticsCharts {
         });
     }
 
-    renderVehicleTypes(vtypes) {
-        const ctx = document.getElementById("vehicle-type-chart");
+    renderSpeedDistribution(speedDist) {
+        const ctx = document.getElementById("chart-speed") || document.getElementById("vehicle-type-chart");
         if (!ctx) return;
 
-        if (this.vehicleTypeChart) {
-            this.vehicleTypeChart.destroy();
+        if (this.speedChart) {
+            this.speedChart.destroy();
         }
 
-        const labels = Object.keys(vtypes);
-        const data = Object.values(vtypes);
-        const colors = ['#0284c7', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+        const labels = Object.keys(speedDist || {});
+        const data = Object.values(speedDist || {});
+        const colors = ['#ef4444', '#f59e0b', '#10b981', '#06b6d4'];
 
-        this.vehicleTypeChart = new Chart(ctx, {
-            type: 'doughnut',
+        this.speedChart = new Chart(ctx, {
+            type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
+                    label: 'Vehicle Count',
                     data: data,
                     backgroundColor: colors,
-                    borderWidth: 2,
-                    borderColor: '#0f172a'
+                    borderRadius: 6,
+                    borderWidth: 0
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: { color: '#94a3b8', boxWidth: 12, font: { size: 11 } }
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#38bdf8',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        padding: 10
                     }
                 },
-                cutout: '70%'
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { size: 10 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#64748b', font: { size: 10 } },
+                        beginAtZero: true
+                    }
+                }
             }
         });
     }
 
-    renderODCorridors(corridors) {
-        const container = document.getElementById("od-corridors-list");
-        if (!container) return;
+    renderCameraTraffic(cameraData) {
+        const ctx = document.getElementById("chart-camera-traffic");
+        if (!ctx) return;
 
-        if (!corridors || corridors.length === 0) {
-            container.innerHTML = `<div class="text-xs text-slate-500 text-center py-4">No OD corridor data yet.</div>`;
-            return;
+        if (this.cameraTrafficChart) {
+            this.cameraTrafficChart.destroy();
         }
 
-        const maxVol = Math.max(...corridors.map(c => c.volume), 1);
+        const labels = (cameraData || []).map(c => `${c.id} (${c.name})`);
+        const data = (cameraData || []).map(c => c.count);
 
-        let html = "";
-        corridors.forEach((c, idx) => {
-            const pct = Math.round((c.volume / maxVol) * 100);
-            html += `
-                <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-800/80">
-                    <div class="flex items-center justify-between text-xs mb-1.5">
-                        <div class="flex items-center space-x-1.5 font-medium text-slate-200">
-                            <span class="text-cyan-400 font-bold">#${idx + 1}</span>
-                            <span>${c.origin}</span>
-                            <span class="text-slate-500">→</span>
-                            <span class="text-emerald-400">${c.destination}</span>
-                        </div>
-                        <span class="font-mono font-bold text-cyan-300 text-xs">${c.volume} trips</span>
-                    </div>
-                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                        <div class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full rounded-full" style="width: ${pct}%"></div>
-                    </div>
-                </div>
-            `;
+        this.cameraTrafficChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Detections',
+                    data: data,
+                    backgroundColor: 'rgba(56, 189, 248, 0.75)',
+                    borderColor: '#38bdf8',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#38bdf8',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        padding: 10
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#64748b', font: { size: 10 } },
+                        beginAtZero: true
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { size: 9 } }
+                    }
+                }
+            }
         });
-        container.innerHTML = html;
     }
 
-    renderBottlenecks(bottlenecks) {
-        const container = document.getElementById("bottlenecks-list");
-        if (!container) return;
-
-        if (!bottlenecks || bottlenecks.length === 0) {
-            container.innerHTML = `<div class="text-xs text-slate-500 text-center py-4">No congestion detected.</div>`;
-            return;
-        }
-
-        let html = "";
-        bottlenecks.slice(0, 6).forEach((b) => {
-            html += `
-                <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-800/80 flex items-center justify-between">
-                    <div>
-                        <div class="font-bold text-xs text-slate-200">${b.camera_name}</div>
-                        <div class="text-[11px] text-slate-400 mt-0.5">${b.sector} (${b.camera_id})</div>
-                        <div class="flex items-center space-x-3 text-[11px] text-slate-400 mt-1">
-                            <span>Vol: <strong class="text-slate-200 font-mono">${b.total_vehicles}</strong></span>
-                            <span>Avg Spd: <strong class="text-slate-200 font-mono">${b.avg_speed} km/h</strong></span>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${b.badge}">
-                            ${b.level}
-                        </span>
-                        <div class="text-[10px] text-slate-400 mt-1">Risk Score: <strong class="text-slate-200">${b.risk_score}%</strong></div>
-                    </div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
+    resizeCharts() {
+        if (this.hourlyChart) this.hourlyChart.resize();
+        if (this.speedChart) this.speedChart.resize();
+        if (this.cameraTrafficChart) this.cameraTrafficChart.resize();
     }
 }
 
