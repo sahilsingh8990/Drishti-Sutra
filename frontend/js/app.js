@@ -92,11 +92,10 @@ class App {
         if (tabName === "predictive") {
             this.loadPredictiveTab();
         } else if (tabName === "analytics") {
-            this.loadAnalyticsTab();
             setTimeout(() => {
                 mapController.invalidateSize();
-                analyticsCharts.resizeCharts();
-            }, 150);
+                this.loadAnalyticsTab();
+            }, 50);
         } else if (tabName === "security") {
             this.loadBlacklist();
             this.loadRecentAlerts();
@@ -642,7 +641,10 @@ class App {
             setTimeout(() => {
                 mapController.invalidateSize();
                 analyticsCharts.resizeCharts();
-            }, 100);
+            }, 50);
+            setTimeout(() => {
+                analyticsCharts.resizeCharts();
+            }, 250);
 
         } catch (e) {
             console.error("Failed to load analytics tab data", e);
@@ -891,12 +893,14 @@ class App {
 
     async searchTrajectory(plateNumber) {
         if (!plateNumber) {
-            plateNumber = document.getElementById("traj-search-input").value;
+            const inputEl = document.getElementById("traj-search-input");
+            if (inputEl) plateNumber = inputEl.value;
         }
         if (!plateNumber) return;
 
         plateNumber = plateNumber.trim().toUpperCase();
-        document.getElementById("traj-search-input").value = plateNumber;
+        const inputEl = document.getElementById("traj-search-input");
+        if (inputEl) inputEl.value = plateNumber;
 
         try {
             const res = await fetch(`/api/trajectory/${encodeURIComponent(plateNumber)}`);
@@ -906,48 +910,69 @@ class App {
             const contentEl = document.getElementById("traj-results-container");
 
             if (!data.found) {
-                notFoundEl.classList.remove("hidden");
-                notFoundEl.textContent = data.message;
-                contentEl.classList.add("hidden");
+                if (notFoundEl) {
+                    notFoundEl.classList.remove("hidden");
+                    notFoundEl.textContent = data.message || "No detection records found for this plate number.";
+                }
+                if (contentEl) contentEl.classList.add("hidden");
                 return;
             }
 
-            notFoundEl.classList.add("hidden");
-            contentEl.classList.remove("hidden");
+            if (notFoundEl) notFoundEl.classList.add("hidden");
+            if (contentEl) contentEl.classList.remove("hidden");
 
             mapController.renderTrajectory(data.waypoints, data.summary);
 
-            const sum = data.summary;
-            document.getElementById("traj-plate-title").textContent = sum.plate_number;
-            document.getElementById("traj-vehicle-type").textContent = sum.vehicle_type;
-            document.getElementById("traj-total-dist").textContent = `${sum.total_distance_km} km`;
-            document.getElementById("traj-avg-speed").textContent = `${sum.avg_speed_kmh} km/h`;
-            document.getElementById("traj-elapsed-time").textContent = `${sum.total_elapsed_minutes} mins`;
-            document.getElementById("traj-total-sightings").textContent = `${sum.total_sightings} Nodes`;
+            const sum = data.summary || {};
 
-            const anomalyBanner = document.getElementById("traj-anomaly-banner");
-            if (sum.anomaly_count > 0) {
-                anomalyBanner.classList.remove("hidden");
-                document.getElementById("traj-anomaly-text").textContent = `${sum.anomaly_count} Trajectory Anomalies Detected! ${sum.anomalies[0].calculated_speed_kmh} km/h between checkpoints.`;
-            } else {
-                anomalyBanner.classList.add("hidden");
+            const elPlate = document.getElementById("traj-plate-title");
+            if (elPlate) elPlate.textContent = sum.plate_number || plateNumber;
+
+            const elBadge = document.getElementById("traj-plate-type-badge");
+            if (elBadge) {
+                if (sum.is_blacklisted) {
+                    elBadge.className = "op-badge op-badge-offline font-mono font-bold text-xs bg-red-950/80 text-red-300 border border-red-500/60";
+                    elBadge.textContent = `🚨 WATCHLIST: ${sum.blacklist_info?.category || 'Alert'}`;
+                } else {
+                    elBadge.className = "op-badge op-badge-online font-mono font-bold text-xs bg-emerald-950/60 text-emerald-300 border border-emerald-500/40";
+                    elBadge.textContent = sum.vehicle_type || "Vehicle Clean";
+                }
             }
 
-            const blacklistTag = document.getElementById("traj-blacklist-tag");
-            if (sum.is_blacklisted) {
-                blacklistTag.classList.remove("hidden");
-                blacklistTag.textContent = `🚨 WATCHLIST: ${sum.blacklist_info.category} (${sum.blacklist_info.severity})`;
-            } else {
-                blacklistTag.classList.add("hidden");
+            const elFirst = document.getElementById("traj-first-seen");
+            if (elFirst) elFirst.textContent = sum.first_seen?.timestamp ? (sum.first_seen.timestamp.includes(' ') ? sum.first_seen.timestamp.split(' ')[1] : sum.first_seen.timestamp) : '--:--:--';
+
+            const elLast = document.getElementById("traj-last-seen");
+            if (elLast) elLast.textContent = sum.last_seen?.timestamp ? (sum.last_seen.timestamp.includes(' ') ? sum.last_seen.timestamp.split(' ')[1] : sum.last_seen.timestamp) : '--:--:--';
+
+            const elDist = document.getElementById("traj-total-dist");
+            if (elDist) elDist.textContent = `${sum.total_distance_km || 0} km`;
+
+            const elSpeed = document.getElementById("traj-avg-speed");
+            if (elSpeed) elSpeed.textContent = `${sum.avg_speed_kmh || 0} km/h`;
+
+            const elObs = document.getElementById("traj-observation-count");
+            if (elObs) elObs.textContent = `${sum.total_sightings || 0} Checkpoints`;
+
+            const anomalyBanner = document.getElementById("traj-anomaly-banner");
+            const anomalyText = document.getElementById("traj-anomaly-text");
+            if (anomalyBanner && anomalyText) {
+                if (sum.anomaly_count > 0 && sum.anomalies && sum.anomalies.length > 0) {
+                    anomalyBanner.classList.remove("hidden");
+                    anomalyText.textContent = `${sum.anomaly_count} Trajectory Anomalies Detected! ${sum.anomalies[0].calculated_speed_kmh} km/h between checkpoints.`;
+                } else {
+                    anomalyBanner.classList.add("hidden");
+                }
             }
 
             const exportBtn = document.getElementById("btn-export-dossier");
             if (exportBtn) {
                 exportBtn.onclick = () => {
-                    window.open(`/api/export-dossier/${encodeURIComponent(sum.plate_number)}`, '_blank');
+                    window.open(`/api/export-dossier/${encodeURIComponent(sum.plate_number || plateNumber)}`, '_blank');
                 };
             }
 
+            // Explicitly render spatio-temporal sequence timeline
             this.renderSpatioTemporalSequence(data.waypoints);
 
         } catch (e) {
@@ -1024,49 +1049,7 @@ class App {
         this.renderSpatioTemporalSequence(waypoints);
     }
 
-    async loadAnalyticsTab() {
-        try {
-            const [heatRes, trendsRes, speedRes, densityRes] = await Promise.all([
-                fetch("/api/analytics/heatmap").then(r => r.json()).catch(() => null),
-                fetch("/api/analytics/hourly-volume").then(r => r.json()).catch(() => null),
-                fetch("/api/analytics/speed-distribution").then(r => r.json()).catch(() => null),
-                fetch("/api/analytics/camera-density").then(r => r.json()).catch(() => null)
-            ]);
 
-            if (heatRes) {
-                mapController.renderHeatmap(heatRes.heatmap_points || [], heatRes.camera_nodes || []);
-            }
-
-            if (trendsRes && trendsRes.hours) {
-                const hours = trendsRes.hours.map(h => h.hour);
-                const counts = trendsRes.hours.map(h => h.count);
-                analyticsCharts.renderHourlyVolume(hours, counts);
-            }
-
-            if (speedRes && speedRes.bins) {
-                const speedDist = {};
-                speedRes.bins.forEach(b => { speedDist[b.range] = b.count; });
-                analyticsCharts.renderSpeedDistribution(speedDist);
-            }
-
-            if (densityRes && densityRes.cameras) {
-                const camDensity = densityRes.cameras.map(c => ({
-                    id: c.camera_id,
-                    name: c.location.replace(" Square", "").replace(" Interchange", "").replace(" Flyover", ""),
-                    count: c.vehicle_count
-                }));
-                analyticsCharts.renderCameraTraffic(camDensity);
-            }
-
-            setTimeout(() => {
-                mapController.invalidateSize();
-                analyticsCharts.resizeCharts();
-            }, 100);
-
-        } catch (e) {
-            console.error("Traffic Analytics API Error:", e);
-        }
-    }
 
     async loadBlacklist() {
         try {

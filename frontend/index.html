@@ -59,7 +59,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/chart.min.js"></script>
+    <script>if (typeof Chart === 'undefined') { document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>'); }</script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="/static/css/style.css?v=2.0.9">
 </head>
@@ -667,25 +668,38 @@
                         <div class="flex items-center space-x-4">
                             <div>
                                 <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Target Registration</span>
-                                <div id="traj-plate-title" class="text-2xl font-bold font-mono text-sky-300 tracking-wider">DL01CA1234</div>
+                                <div id="traj-plate-title" class="text-2xl font-bold font-mono text-sky-300 tracking-wider">--</div>
                             </div>
-                            <span id="traj-plate-type-badge" class="op-badge op-badge-offline">STOLEN VEHICLE</span>
+                            <span id="traj-plate-type-badge" class="op-badge op-badge-offline font-mono font-bold text-xs">--</span>
                         </div>
 
                         <div class="flex items-center space-x-6 text-xs">
                             <div>
                                 <span class="text-[10px] text-slate-400 uppercase font-bold">First Sight</span>
-                                <div id="traj-first-seen" class="font-mono text-slate-200">10:02:13</div>
+                                <div id="traj-first-seen" class="font-mono text-slate-200">--:--:--</div>
                             </div>
                             <div>
                                 <span class="text-[10px] text-slate-400 uppercase font-bold">Last Sighting</span>
-                                <div id="traj-last-seen" class="font-mono text-slate-200">10:16:02</div>
+                                <div id="traj-last-seen" class="font-mono text-slate-200">--:--:--</div>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase font-bold">Total Distance</span>
+                                <div id="traj-total-dist" class="font-mono text-slate-200">0 km</div>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase font-bold">Avg Speed</span>
+                                <div id="traj-avg-speed" class="font-mono text-slate-200">0 km/h</div>
                             </div>
                             <div>
                                 <span class="text-[10px] text-slate-400 uppercase font-bold">Observations</span>
-                                <div id="traj-observation-count" class="font-mono text-sky-400 font-bold">3 Checkpoints</div>
+                                <div id="traj-observation-count" class="font-mono text-sky-400 font-bold">0 Checkpoints</div>
                             </div>
                         </div>
+                    </div>
+
+                    <div id="traj-anomaly-banner" class="hidden p-3 rounded-xl bg-red-950/60 border border-red-500/60 text-red-300 text-xs font-semibold flex items-center space-x-2">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-red-400"></i>
+                        <span id="traj-anomaly-text"></span>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -709,12 +723,12 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     <div class="op-panel p-4 space-y-3 flex flex-col">
                         <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">Hourly Traffic Volume Trend</h3>
-                        <div class="relative w-full h-64 flex-1"><canvas id="chart-volume"></canvas></div>
+                        <div class="relative w-full h-64 flex-1"><canvas id="chart-volume" class="w-full h-full"></canvas></div>
                     </div>
 
                     <div class="op-panel p-4 space-y-3 flex flex-col">
                         <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">Network Speed Distribution</h3>
-                        <div class="relative w-full h-64 flex-1"><canvas id="chart-speed"></canvas></div>
+                        <div class="relative w-full h-64 flex-1"><canvas id="chart-speed" class="w-full h-full"></canvas></div>
                     </div>
                 </div>
 
@@ -729,7 +743,7 @@
 
                     <div class="op-panel p-4 space-y-3 flex flex-col">
                         <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">Camera Node Traffic Density</h3>
-                        <div class="relative w-full h-80 flex-1"><canvas id="chart-camera-traffic"></canvas></div>
+                        <div class="relative w-full h-80 flex-1"><canvas id="chart-camera-traffic" class="w-full h-full"></canvas></div>
                     </div>
                 </div>
             </section>

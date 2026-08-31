@@ -4,19 +4,52 @@ class AnalyticsCharts {
         this.hourlyChart = null;
         this.speedChart = null;
         this.cameraTrafficChart = null;
+
+        this.lastHourlyData = null;
+        this.lastSpeedData = null;
+        this.lastCameraData = null;
+    }
+
+    getThemeColors() {
+        const isLight = document.documentElement.classList.contains("theme-light") ||
+                       document.body.classList.contains("theme-light") ||
+                       (window.themeController && window.themeController.currentTheme === "light");
+
+        return {
+            isLight,
+            gridColor: isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+            tickColor: isLight ? '#475569' : '#94a3b8',
+            labelColor: isLight ? '#0f172a' : '#cbd5e1',
+            tooltipBg: isLight ? '#ffffff' : '#0f172a',
+            tooltipText: isLight ? '#0f172a' : '#f8fafc',
+            tooltipBorder: isLight ? '#cbd5e1' : '#334155',
+            volumeLineColor: isLight ? '#0284c7' : '#06b6d4',
+            volumePointColor: isLight ? '#0369a1' : '#0891b2',
+            volumeGrad1: isLight ? 'rgba(2, 132, 199, 0.35)' : 'rgba(6, 182, 212, 0.45)',
+            volumeGrad2: isLight ? 'rgba(2, 132, 199, 0.0)' : 'rgba(6, 182, 212, 0.0)',
+            speedColors: isLight 
+                ? ['#ef4444', '#f59e0b', '#10b981', '#0284c7', '#8b5cf6', '#ec4899']
+                : ['#f87171', '#fbbf24', '#34d399', '#38bdf8', '#a78bfa', '#f472b6'],
+            cameraBarBg: isLight ? 'rgba(2, 132, 199, 0.85)' : 'rgba(56, 189, 248, 0.85)',
+            cameraBarBorder: isLight ? '#0284c7' : '#38bdf8'
+        };
     }
 
     renderHourlyVolume(hours, volumes) {
+        this.lastHourlyData = { hours, volumes };
         const ctx = document.getElementById("chart-volume") || document.getElementById("hourly-volume-chart");
-        if (!ctx) return;
+        if (!ctx || typeof Chart === 'undefined') return;
 
         if (this.hourlyChart) {
             this.hourlyChart.destroy();
+            this.hourlyChart = null;
         }
 
-        const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(6, 182, 212, 0.45)');
-        gradient.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
+        const colors = this.getThemeColors();
+        const canvasCtx = ctx.getContext('2d');
+        const gradient = canvasCtx.createLinearGradient(0, 0, 0, 260);
+        gradient.addColorStop(0, colors.volumeGrad1);
+        gradient.addColorStop(1, colors.volumeGrad2);
 
         this.hourlyChart = new Chart(ctx, {
             type: 'line',
@@ -25,11 +58,11 @@ class AnalyticsCharts {
                 datasets: [{
                     label: 'Vehicle Throughput (Vehicles/Hr)',
                     data: volumes,
-                    borderColor: '#06b6d4',
+                    borderColor: colors.volumeLineColor,
                     backgroundColor: gradient,
                     borderWidth: 2.5,
-                    pointBackgroundColor: '#0891b2',
-                    pointBorderColor: '#ffffff',
+                    pointBackgroundColor: colors.volumePointColor,
+                    pointBorderColor: colors.isLight ? '#ffffff' : '#0f172a',
                     pointRadius: 3,
                     fill: true,
                     tension: 0.35
@@ -41,21 +74,22 @@ class AnalyticsCharts {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#0f172a',
-                        titleColor: '#38bdf8',
-                        borderColor: '#334155',
+                        backgroundColor: colors.tooltipBg,
+                        titleColor: colors.tooltipText,
+                        bodyColor: colors.tooltipText,
+                        borderColor: colors.tooltipBorder,
                         borderWidth: 1,
                         padding: 10
                     }
                 },
                 scales: {
                     x: {
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#64748b', font: { size: 10 } }
+                        grid: { color: colors.gridColor },
+                        ticks: { color: colors.tickColor, font: { size: 10, weight: 'bold' } }
                     },
                     y: {
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#64748b', font: { size: 10 } },
+                        grid: { color: colors.gridColor },
+                        ticks: { color: colors.tickColor, font: { size: 10, weight: 'bold' } },
                         beginAtZero: true
                     }
                 }
@@ -64,16 +98,18 @@ class AnalyticsCharts {
     }
 
     renderSpeedDistribution(speedDist) {
+        this.lastSpeedData = speedDist;
         const ctx = document.getElementById("chart-speed") || document.getElementById("vehicle-type-chart");
-        if (!ctx) return;
+        if (!ctx || typeof Chart === 'undefined') return;
 
         if (this.speedChart) {
             this.speedChart.destroy();
+            this.speedChart = null;
         }
 
+        const colors = this.getThemeColors();
         const labels = Object.keys(speedDist || {});
         const data = Object.values(speedDist || {});
-        const colors = ['#ef4444', '#f59e0b', '#10b981', '#06b6d4'];
 
         this.speedChart = new Chart(ctx, {
             type: 'bar',
@@ -82,7 +118,7 @@ class AnalyticsCharts {
                 datasets: [{
                     label: 'Vehicle Count',
                     data: data,
-                    backgroundColor: colors,
+                    backgroundColor: colors.speedColors,
                     borderRadius: 6,
                     borderWidth: 0
                 }]
@@ -93,9 +129,10 @@ class AnalyticsCharts {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#0f172a',
-                        titleColor: '#38bdf8',
-                        borderColor: '#334155',
+                        backgroundColor: colors.tooltipBg,
+                        titleColor: colors.tooltipText,
+                        bodyColor: colors.tooltipText,
+                        borderColor: colors.tooltipBorder,
                         borderWidth: 1,
                         padding: 10
                     }
@@ -103,11 +140,11 @@ class AnalyticsCharts {
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: { color: '#94a3b8', font: { size: 10 } }
+                        ticks: { color: colors.tickColor, font: { size: 10, weight: 'bold' } }
                     },
                     y: {
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#64748b', font: { size: 10 } },
+                        grid: { color: colors.gridColor },
+                        ticks: { color: colors.tickColor, font: { size: 10, weight: 'bold' } },
                         beginAtZero: true
                     }
                 }
@@ -116,13 +153,16 @@ class AnalyticsCharts {
     }
 
     renderCameraTraffic(cameraData) {
+        this.lastCameraData = cameraData;
         const ctx = document.getElementById("chart-camera-traffic");
-        if (!ctx) return;
+        if (!ctx || typeof Chart === 'undefined') return;
 
         if (this.cameraTrafficChart) {
             this.cameraTrafficChart.destroy();
+            this.cameraTrafficChart = null;
         }
 
+        const colors = this.getThemeColors();
         const labels = (cameraData || []).map(c => `${c.id} (${c.name})`);
         const data = (cameraData || []).map(c => c.count);
 
@@ -133,8 +173,8 @@ class AnalyticsCharts {
                 datasets: [{
                     label: 'Total Detections',
                     data: data,
-                    backgroundColor: 'rgba(56, 189, 248, 0.75)',
-                    borderColor: '#38bdf8',
+                    backgroundColor: colors.cameraBarBg,
+                    borderColor: colors.cameraBarBorder,
                     borderWidth: 1,
                     borderRadius: 4
                 }]
@@ -146,22 +186,23 @@ class AnalyticsCharts {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#0f172a',
-                        titleColor: '#38bdf8',
-                        borderColor: '#334155',
+                        backgroundColor: colors.tooltipBg,
+                        titleColor: colors.tooltipText,
+                        bodyColor: colors.tooltipText,
+                        borderColor: colors.tooltipBorder,
                         borderWidth: 1,
                         padding: 10
                     }
                 },
                 scales: {
                     x: {
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#64748b', font: { size: 10 } },
+                        grid: { color: colors.gridColor },
+                        ticks: { color: colors.tickColor, font: { size: 10, weight: 'bold' } },
                         beginAtZero: true
                     },
                     y: {
                         grid: { display: false },
-                        ticks: { color: '#94a3b8', font: { size: 9 } }
+                        ticks: { color: colors.tickColor, font: { size: 9, weight: 'bold' } }
                     }
                 }
             }
@@ -175,38 +216,19 @@ class AnalyticsCharts {
     }
 
     updateTheme(theme) {
-        const isLight = theme === 'light';
-        const gridColor = isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.05)';
-        const tickColor = isLight ? '#475569' : '#64748b';
-        const labelColor = isLight ? '#1e293b' : '#94a3b8';
-        const tooltipBg = isLight ? '#ffffff' : '#0f172a';
-        const tooltipBorder = isLight ? '#cbd5e1' : '#334155';
-
-        [this.hourlyChart, this.speedChart, this.cameraTrafficChart].forEach(chart => {
-            if (chart && chart.options) {
-                if (chart.options.plugins && chart.options.plugins.tooltip) {
-                    chart.options.plugins.tooltip.backgroundColor = tooltipBg;
-                    chart.options.plugins.tooltip.borderColor = tooltipBorder;
-                }
-                if (chart.options.scales) {
-                    if (chart.options.scales.x) {
-                        if (chart.options.scales.x.grid && chart.options.scales.x.grid.display !== false) {
-                            chart.options.scales.x.grid.color = gridColor;
-                        }
-                        if (chart.options.scales.x.ticks) chart.options.scales.x.ticks.color = labelColor;
-                    }
-                    if (chart.options.scales.y) {
-                        if (chart.options.scales.y.grid && chart.options.scales.y.grid.display !== false) {
-                            chart.options.scales.y.grid.color = gridColor;
-                        }
-                        if (chart.options.scales.y.ticks) chart.options.scales.y.ticks.color = tickColor;
-                    }
-                }
-                chart.update();
-            }
-        });
+        if (this.lastHourlyData) {
+            this.renderHourlyVolume(this.lastHourlyData.hours, this.lastHourlyData.volumes);
+        }
+        if (this.lastSpeedData) {
+            this.renderSpeedDistribution(this.lastSpeedData);
+        }
+        if (this.lastCameraData) {
+            this.renderCameraTraffic(this.lastCameraData);
+        }
     }
 }
 
 const analyticsCharts = new AnalyticsCharts();
+window.analyticsCharts = analyticsCharts;
+
 
