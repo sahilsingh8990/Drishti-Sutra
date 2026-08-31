@@ -9,6 +9,7 @@ class App {
     }
 
     async init() {
+        this.initTheme();
         this.startClock();
         mapController.initMaps();
         this.setupTabNavigation();
@@ -25,6 +26,24 @@ class App {
         this.searchPredictiveHandoff("25BH2534O");
         this.loadActiveWatchQueue();
         this.startDetectionsPolling();
+    }
+
+    initTheme() {
+        if (window.themeController) {
+            themeController.initTheme();
+        }
+    }
+
+    applyTheme(theme, notify = true) {
+        if (window.themeController) {
+            themeController.setTheme(theme, notify);
+        }
+    }
+
+    toggleTheme() {
+        if (window.themeController) {
+            themeController.toggleTheme();
+        }
     }
 
     startClock() {
@@ -1396,6 +1415,11 @@ class App {
                     : `<i data-lucide="volume-x" class="w-4 h-4 text-slate-500"></i>`;
                 if (window.lucide) lucide.createIcons();
             });
+        }
+
+        const themeBtn = document.getElementById("btn-toggle-theme");
+        if (themeBtn) {
+            themeBtn.addEventListener("click", () => this.toggleTheme());
         }
 
         const webcamBtn = document.getElementById("btn-toggle-webcam");

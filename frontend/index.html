@@ -4,57 +4,113 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drishti-Sutra // Integrated Traffic Command & Control Centre</title>
+    <script>
+        (function() {
+            var theme = localStorage.getItem("drishti-sutra-theme") || localStorage.getItem("drishti_theme") || "dark";
+            document.documentElement.setAttribute("data-theme", theme);
+            if (theme === "light") {
+                document.documentElement.classList.add("theme-light");
+            }
+        })();
+
+        function toggleDashboardTheme() {
+            var curr = document.documentElement.getAttribute("data-theme") || "dark";
+            var next = curr === "light" ? "dark" : "light";
+
+            document.documentElement.setAttribute("data-theme", next);
+            document.body.setAttribute("data-theme", next);
+            localStorage.setItem("drishti-sutra-theme", next);
+
+            var sunIcon = document.getElementById("theme-icon-sun");
+            var moonIcon = document.getElementById("theme-icon-moon");
+            var themeText = document.getElementById("theme-text");
+
+            if (next === "light") {
+                document.documentElement.classList.add("theme-light");
+                document.body.classList.add("theme-light");
+                if (sunIcon) sunIcon.classList.remove("hidden");
+                if (moonIcon) moonIcon.classList.add("hidden");
+                if (themeText) themeText.textContent = "LIGHT";
+            } else {
+                document.documentElement.classList.remove("theme-light");
+                document.body.classList.remove("theme-light");
+                if (sunIcon) sunIcon.classList.add("hidden");
+                if (moonIcon) moonIcon.classList.remove("hidden");
+                if (themeText) themeText.textContent = "DARK";
+            }
+
+            if (window.themeController) {
+                try { window.themeController.setTheme(next, true); } catch(e){}
+            } else if (window.app) {
+                try { window.app.applyTheme(next, true); } catch(e){}
+            }
+        }
+        window.toggleDashboardTheme = toggleDashboardTheme;
+
+        // Capture phase document click listener for bulletproof theme toggling
+        document.addEventListener("click", function(e) {
+            var btn = e.target && e.target.closest ? e.target.closest("#btn-toggle-theme") : null;
+            if (btn) {
+                window.toggleDashboardTheme();
+            }
+        }, true);
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=2.0.9">
 </head>
 <body class="bg-[#090d16] text-slate-100 min-h-screen flex flex-col antialiased">
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-2 max-w-md w-full pointer-events-none"></div>
 
     <!-- TOP OPERATIONAL HEADER -->
-    <header class="bg-[#0a0e18] border-b border-slate-800 px-5 py-2.5 flex items-center justify-between sticky top-0 z-40">
-        <div class="flex items-center space-x-3">
-            <div class="w-8 h-8 rounded bg-sky-950 border border-sky-700/60 flex items-center justify-center text-sky-400">
-                <i data-lucide="scan-line" class="w-4 h-4"></i>
-            </div>
+    <header class="bg-[#0a0e18] border-b border-slate-800 px-6 py-4 min-h-[76px] flex items-center justify-between sticky top-0 z-40 shadow-md">
+        <div class="flex items-center space-x-4">
+            <a href="/" class="flex items-center space-x-3 group">
+                <img src="/static/logo_transparent.png" alt="Drishti Sutra Logo" class="h-12 md:h-14 w-auto object-contain filter drop-shadow-md group-hover:scale-105 transition-transform" />
+            </a>
             <div>
-                <div class="flex items-center space-x-2">
-                    <span class="font-extrabold text-sm text-slate-100 tracking-wider font-mono">DRISHTI-SUTRA</span>
-                    <span class="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-sky-950 border border-sky-800 text-sky-400 font-bold">ICCC CORE</span>
+                <div class="flex items-center space-x-2.5">
+                    <span class="font-extrabold text-base md:text-lg text-slate-100 tracking-wider font-mono">DRISHTI-SUTRA</span>
+                    <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-sky-950 border border-sky-800 text-sky-400 font-bold tracking-wide">ICCC CORE</span>
                 </div>
-                <p class="text-[10px] text-slate-400 font-medium">Integrated Traffic Command & Control Centre &bull; Multi-Camera ANPR Analytics</p>
+                <p class="text-xs text-slate-400 font-medium mt-0.5">Integrated Traffic Command & Control Centre &bull; Multi-Camera ANPR Analytics</p>
             </div>
         </div>
 
         <div class="flex items-center space-x-3">
-            <div class="hidden md:flex items-center space-x-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800">
-                <i data-lucide="map" class="w-3.5 h-3.5 text-sky-400"></i>
-                <span class="text-[10px] text-slate-400 font-mono font-bold">NAGPUR MAP:</span>
-                <select id="free-map-theme-select" class="bg-slate-900 text-[10px] font-mono text-sky-300 border-none focus:outline-none cursor-pointer font-bold">
+            <div class="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-[10px] bg-slate-900 border border-slate-800">
+                <i data-lucide="map" class="w-4 h-4 text-sky-400"></i>
+                <span class="text-xs text-slate-400 font-mono font-bold">NAGPUR MAP:</span>
+                <select id="free-map-theme-select" class="bg-slate-900 text-xs font-mono text-sky-300 border-none focus:outline-none cursor-pointer font-bold rounded-[6px]">
                     <option value="carto-dark">FREE: CARTO Dark Matter (Command Center)</option>
                     <option value="esri-dark">FREE: Esri World Dark Gray Canvas</option>
                     <option value="osm-standard">FREE: OpenStreetMap Standard</option>
                     <option value="carto-voyager">FREE: CARTO Day View</option>
                 </select>
             </div>
-            <div id="connection-status" class="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider font-mono">Grid Online</span>
+            <div id="connection-status" class="flex items-center space-x-2 px-3 py-1.5 rounded-[10px] bg-slate-900 border border-slate-800">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-xs text-emerald-400 font-semibold uppercase tracking-wider font-mono">Grid Online</span>
             </div>
-            <button id="btn-toggle-audio" class="p-1.5 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 text-xs flex items-center space-x-1 transition-all">
-                <i data-lucide="volume-2" class="w-3.5 h-3.5 text-sky-400"></i>
+            <button id="btn-toggle-audio" class="p-2 rounded-[10px] bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 text-xs flex items-center space-x-1 transition-all" title="Toggle Alert Chime Sound">
+                <i data-lucide="volume-2" class="w-4 h-4 text-sky-400"></i>
             </button>
-            <div id="system-clock" class="font-mono text-xs text-slate-400 bg-slate-950 px-2.5 py-1 rounded border border-slate-800 hidden sm:block">
+            <button id="btn-toggle-theme" type="button" onclick="window.toggleDashboardTheme();" style="position: relative; z-index: 9999; cursor: pointer; pointer-events: auto !important;" class="px-3.5 py-1.5 rounded-[10px] bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 text-xs flex items-center space-x-2 transition-all focus:outline-none focus:ring-2 focus:ring-sky-500" title="Switch to light mode" aria-label="Switch to light mode">
+                <i data-lucide="sun" id="theme-icon-sun" class="w-4 h-4 text-amber-400 hidden"></i>
+                <i data-lucide="moon" id="theme-icon-moon" class="w-4 h-4 text-sky-400"></i>
+                <span id="theme-text" class="text-xs font-mono font-bold">DARK</span>
+            </button>
+            <div id="system-clock" class="font-mono text-xs text-slate-400 bg-slate-950 px-3 py-1.5 rounded-[10px] border border-slate-800 hidden sm:block">
                 00:00:00 UTC+5:30
             </div>
         </div>
     </header>
 
-    <div class="flex flex-1 min-h-[calc(100vh-49px)]">
+    <div class="flex flex-1 min-h-[calc(100vh-76px)]">
         <!-- LEFT OPERATIONAL SIDEBAR -->
         <aside class="w-60 bg-[#0b0f1a] border-r border-slate-800 p-3 flex flex-col justify-between flex-shrink-0">
             <div class="space-y-1">
@@ -793,9 +849,10 @@
         </main>
     </div>
 
-    <script src="/static/js/alerts_manager.js?v=2.0.1"></script>
-    <script src="/static/js/map_controller.js?v=2.0.1"></script>
-    <script src="/static/js/analytics_charts.js?v=2.0.1"></script>
-    <script src="/static/js/app.js?v=2.0.1"></script>
+    <script src="/static/js/alerts_manager.js?v=2.0.8"></script>
+    <script src="/static/js/map_controller.js?v=2.0.8"></script>
+    <script src="/static/js/analytics_charts.js?v=2.0.8"></script>
+    <script src="/static/js/theme_controller.js?v=2.0.8"></script>
+    <script src="/static/js/app.js?v=2.0.8"></script>
 </body>
 </html>

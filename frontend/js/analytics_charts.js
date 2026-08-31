@@ -173,6 +173,40 @@ class AnalyticsCharts {
         if (this.speedChart) this.speedChart.resize();
         if (this.cameraTrafficChart) this.cameraTrafficChart.resize();
     }
+
+    updateTheme(theme) {
+        const isLight = theme === 'light';
+        const gridColor = isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.05)';
+        const tickColor = isLight ? '#475569' : '#64748b';
+        const labelColor = isLight ? '#1e293b' : '#94a3b8';
+        const tooltipBg = isLight ? '#ffffff' : '#0f172a';
+        const tooltipBorder = isLight ? '#cbd5e1' : '#334155';
+
+        [this.hourlyChart, this.speedChart, this.cameraTrafficChart].forEach(chart => {
+            if (chart && chart.options) {
+                if (chart.options.plugins && chart.options.plugins.tooltip) {
+                    chart.options.plugins.tooltip.backgroundColor = tooltipBg;
+                    chart.options.plugins.tooltip.borderColor = tooltipBorder;
+                }
+                if (chart.options.scales) {
+                    if (chart.options.scales.x) {
+                        if (chart.options.scales.x.grid && chart.options.scales.x.grid.display !== false) {
+                            chart.options.scales.x.grid.color = gridColor;
+                        }
+                        if (chart.options.scales.x.ticks) chart.options.scales.x.ticks.color = labelColor;
+                    }
+                    if (chart.options.scales.y) {
+                        if (chart.options.scales.y.grid && chart.options.scales.y.grid.display !== false) {
+                            chart.options.scales.y.grid.color = gridColor;
+                        }
+                        if (chart.options.scales.y.ticks) chart.options.scales.y.ticks.color = tickColor;
+                    }
+                }
+                chart.update();
+            }
+        });
+    }
 }
 
 const analyticsCharts = new AnalyticsCharts();
+
