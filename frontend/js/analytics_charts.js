@@ -17,21 +17,19 @@ class AnalyticsCharts {
 
         return {
             isLight,
-            gridColor: isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-            tickColor: isLight ? '#475569' : '#94a3b8',
-            labelColor: isLight ? '#0f172a' : '#cbd5e1',
-            tooltipBg: isLight ? '#ffffff' : '#0f172a',
-            tooltipText: isLight ? '#0f172a' : '#f8fafc',
-            tooltipBorder: isLight ? '#cbd5e1' : '#334155',
-            volumeLineColor: isLight ? '#0284c7' : '#06b6d4',
-            volumePointColor: isLight ? '#0369a1' : '#0891b2',
-            volumeGrad1: isLight ? 'rgba(2, 132, 199, 0.35)' : 'rgba(6, 182, 212, 0.45)',
-            volumeGrad2: isLight ? 'rgba(2, 132, 199, 0.0)' : 'rgba(6, 182, 212, 0.0)',
-            speedColors: isLight 
-                ? ['#ef4444', '#f59e0b', '#10b981', '#0284c7', '#8b5cf6', '#ec4899']
-                : ['#f87171', '#fbbf24', '#34d399', '#38bdf8', '#a78bfa', '#f472b6'],
-            cameraBarBg: isLight ? 'rgba(2, 132, 199, 0.85)' : 'rgba(56, 189, 248, 0.85)',
-            cameraBarBorder: isLight ? '#0284c7' : '#38bdf8'
+            gridColor: isLight ? 'rgba(6, 43, 74, 0.1)' : 'rgba(14, 68, 109, 0.4)',
+            tickColor: isLight ? '#062B4A' : '#A1B3C4',
+            labelColor: isLight ? '#062B4A' : '#F7F6F1',
+            tooltipBg: isLight ? '#FFFFFF' : '#062B4A',
+            tooltipText: isLight ? '#062B4A' : '#F7F6F1',
+            tooltipBorder: isLight ? '#CBD3D8' : '#0E446D',
+            volumeLineColor: '#13752F', // Forest Green Line
+            volumePointColor: '#2E9147',
+            volumeGrad1: isLight ? 'rgba(19, 117, 47, 0.35)' : 'rgba(19, 117, 47, 0.45)',
+            volumeGrad2: 'rgba(19, 117, 47, 0.01)',
+            speedColors: ['#13752F', '#2E9147', '#D98212', '#F6A126', '#0A3655', '#D83A3A'],
+            cameraBarBg: 'rgba(19, 117, 47, 0.85)',
+            cameraBarBorder: '#2E9147'
         };
     }
 
@@ -62,7 +60,7 @@ class AnalyticsCharts {
                     backgroundColor: gradient,
                     borderWidth: 2.5,
                     pointBackgroundColor: colors.volumePointColor,
-                    pointBorderColor: colors.isLight ? '#ffffff' : '#0f172a',
+                    pointBorderColor: colors.isLight ? '#FFFFFF' : '#041F36',
                     pointRadius: 3,
                     fill: true,
                     tension: 0.35
@@ -230,5 +228,3 @@ class AnalyticsCharts {
 
 const analyticsCharts = new AnalyticsCharts();
 window.analyticsCharts = analyticsCharts;
-
-

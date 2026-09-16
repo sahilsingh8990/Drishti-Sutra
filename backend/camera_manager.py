@@ -285,6 +285,13 @@ class CameraManager:
         conn.commit()
         conn.close()
 
+        # Synchronize Excel workbook with newly recorded detection
+        try:
+            from backend.excel_exporter import export_database_to_excel
+            export_database_to_excel()
+        except Exception:
+            pass
+
         resolved_plate = predictive_info["resolved_plate"] if predictive_info else plate_number
         candidate_identities = predictive_info["candidate_identities"] if predictive_info else []
 

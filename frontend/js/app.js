@@ -46,6 +46,25 @@ class App {
         }
     }
 
+    async openExcelOnSystem() {
+        try {
+            if (window.alertsManager) {
+                alertsManager.showToast("Opening Excel", "Launching Excel spreadsheet application on Desktop PC...", "INFO");
+            }
+            const res = await fetch("/api/export/excel/open", { method: "POST" });
+            const data = await res.json();
+            if (res.ok) {
+                if (window.alertsManager) {
+                    alertsManager.showToast("Excel Opened", data.message || "Excel file opened on PC.", "HIGH");
+                }
+            } else {
+                window.location.href = "/api/export/excel";
+            }
+        } catch (e) {
+            window.location.href = "/api/export/excel";
+        }
+    }
+
     startClock() {
         const clockEl = document.getElementById("system-clock");
         const update = () => {
@@ -73,9 +92,9 @@ class App {
 
         document.querySelectorAll(".tab-btn").forEach(btn => {
             if (btn.dataset.tab === tabName) {
-                btn.className = "tab-btn w-full px-3 py-2 rounded text-xs font-bold transition-all flex items-center space-x-2.5 bg-sky-950/80 text-sky-300 border border-sky-700/60 shadow-sm";
+                btn.className = "tab-btn active-tab w-full px-3 py-2.5 rounded-md text-xs font-bold transition-all flex items-center space-x-2.5 bg-[#13752F]/25 text-[#F7F6F1] border-l-4 border-[#13752F] shadow-sm";
             } else {
-                btn.className = "tab-btn w-full px-3 py-2 rounded text-xs font-semibold transition-all flex items-center space-x-2.5 text-slate-400 hover:bg-slate-800/60 hover:text-slate-200";
+                btn.className = "tab-btn w-full px-3 py-2.5 rounded-md text-xs font-semibold transition-all flex items-center space-x-2.5 text-[#A1B3C4] hover:bg-[#13752F]/15 hover:text-[#F7F6F1]";
             }
         });
 
@@ -103,6 +122,36 @@ class App {
             mapController.renderInfrastructure(this.cameras);
             this.renderInfrastructureTable();
         }
+    }
+
+    setCameraGrid(mode) {
+        const container = document.getElementById("camera-grid-container");
+        if (!container) return;
+        container.className = `camera-grid-${mode}`;
+
+        ["2x2", "3x3", "4x4"].forEach(g => {
+            const btn = document.getElementById(`btn-grid-${g}`);
+            if (btn) {
+                if (g === mode) {
+                    btn.className = "px-2.5 py-1 rounded text-xs font-mono font-bold transition-all text-white bg-[#13752F] border border-[#13752F]";
+                } else {
+                    btn.className = "px-2.5 py-1 rounded text-xs font-mono font-bold transition-all text-[#A1B3C4] hover:text-white";
+                }
+            }
+        });
+    }
+
+    filterWatchlist() {
+        const query = (document.getElementById("bl-search-filter")?.value || "").toUpperCase().trim();
+        const rows = document.querySelectorAll("#blacklist-table-body tr");
+        rows.forEach(row => {
+            const text = row.innerText.toUpperCase();
+            if (!query || text.includes(query)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
     }
 
     connectWebSocket() {
@@ -206,12 +255,12 @@ class App {
             card.className = "op-card flex items-center justify-between transition-all";
             
             const isBlacklisted = detection.is_blacklisted;
-            const plateBg = isBlacklisted ? "bg-red-950 text-red-300 border-red-800" : "bg-sky-950 text-sky-300 border-sky-800";
+            const plateBg = isBlacklisted ? "bg-red-950/70 text-red-200 border-red-800" : "bg-[#0D5A25]/30 text-[#2E9147] border-[#13752F]";
             const camName = detection.camera_name || `Camera ${detection.camera_id || 'CAM-01'}`;
 
             card.innerHTML = `
                 <div class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300 font-mono text-xs font-bold">
+                    <div class="w-8 h-8 rounded bg-[#0A3655] border border-[#0E446D] flex items-center justify-center text-[#F7F6F1] font-mono text-xs font-bold">
                         ${(detection.camera_id || 'CAM-01').replace('CAM-', '#')}
                     </div>
                     <div>
@@ -219,12 +268,12 @@ class App {
                             <span class="font-mono font-bold text-xs tracking-wider px-1.5 py-0.2 rounded border ${plateBg}">${detection.plate_number}</span>
                             ${isBlacklisted ? '<span class="op-badge op-badge-offline">FLAGGED</span>' : ''}
                         </div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">${camName}</div>
+                        <div class="text-[10px] text-[#A1B3C4] font-medium mt-0.5">${camName}</div>
                     </div>
                 </div>
                 <div class="text-right text-xs font-mono">
-                    <div class="font-bold text-slate-200">${detection.speed_kmh || 45} km/h</div>
-                    <div class="card-time-val text-[10px] text-slate-500 mt-0.5">${timeStr}</div>
+                    <div class="font-bold text-[#F7F6F1]">${detection.speed_kmh || 45} km/h</div>
+                    <div class="card-time-val text-[10px] text-[#A1B3C4] mt-0.5">${timeStr}</div>
                 </div>
             `;
 
@@ -400,23 +449,23 @@ class App {
         candidates.forEach(cand => {
             const isSelected = cand.plate === resolvedPlate;
             const card = document.createElement("div");
-            card.className = `p-3 rounded-xl border transition-all ${
+            card.className = `p-3 rounded-lg border transition-all ${
                 isSelected
-                    ? "bg-purple-950/40 border-purple-500/80 shadow-lg shadow-purple-950/50"
-                    : "bg-slate-900/80 border-slate-800 hover:border-slate-700"
+                    ? "op-card bg-emerald-50 border-emerald-500 shadow-sm"
+                    : "op-card border-slate-300"
             }`;
 
             card.innerHTML = `
                 <div class="flex items-center justify-between mb-1.5">
-                    <span class="font-mono font-extrabold text-sm ${isSelected ? 'text-purple-300' : 'text-slate-200'}">${cand.plate}</span>
-                    <span class="text-xs font-mono font-bold ${cand.probability >= 0.7 ? 'text-emerald-400' : cand.probability >= 0.2 ? 'text-amber-400' : 'text-slate-400'}">${cand.percentage}%</span>
+                    <span class="font-mono font-extrabold text-sm ${isSelected ? 'text-emerald-800 font-bold' : 'text-slate-800'}">${cand.plate}</span>
+                    <span class="text-xs font-mono font-bold ${cand.probability >= 0.7 ? 'text-emerald-700' : cand.probability >= 0.2 ? 'text-amber-600' : 'text-slate-500'}">${cand.percentage}%</span>
                 </div>
-                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mb-2">
-                    <div class="h-full rounded-full ${isSelected ? 'bg-gradient-to-r from-purple-500 to-emerald-400' : 'bg-slate-600'}" style="width: ${cand.percentage}%"></div>
+                <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mb-2">
+                    <div class="h-full rounded-full ${isSelected ? 'bg-emerald-600' : 'bg-slate-400'}" style="width: ${cand.percentage}%"></div>
                 </div>
-                <div class="text-[10px] text-slate-400 flex items-center justify-between">
+                <div class="text-[10px] text-slate-500 flex items-center justify-between">
                     <span>${cand.is_valid_structure ? '✓ Valid Indian' : cand.plate === 'Other' ? 'Residual Error' : 'OCR Permutation'}</span>
-                    ${isSelected ? '<span class="text-purple-400 font-bold">PRIMARY</span>' : ''}
+                    ${isSelected ? '<span class="text-emerald-700 font-bold">PRIMARY</span>' : ''}
                 </div>
             `;
             container.appendChild(card);
@@ -432,25 +481,22 @@ class App {
             return;
         }
 
-        container.innerHTML = "";
-        factors.forEach(f => {
-            const card = document.createElement("div");
-            card.className = "factor-chip flex items-start space-x-3";
-            card.innerHTML = `
-                <div class="p-2 rounded-lg bg-purple-500/20 text-purple-300 flex-shrink-0">
-                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+        container.innerHTML = factors.map(f => `
+            <div class="factor-chip flex items-center justify-between p-2.5 rounded-lg border border-slate-300 bg-white">
+                <div>
+                    <span class="text-xs font-bold text-slate-800">${f.factor}</span>
+                    <div class="text-[10px] text-slate-500 mt-0.5">${f.reasoning || ''}</div>
                 </div>
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-xs text-slate-200">${f.factor_name}</span>
-                        <span class="text-[11px] font-mono font-bold text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/40">${f.score}</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">${f.description}</p>
+                <div class="text-right ml-2 flex-shrink-0">
+                    <div class="text-xs font-bold font-mono text-slate-900">${f.weight_percentage}%</div>
+                    <span class="op-badge ${
+                        f.confidence === 'HIGH' ? 'op-badge-online' :
+                        f.confidence === 'MEDIUM' ? 'op-badge-warning' :
+                        'op-badge-watching'
+                    }">${f.confidence}</span>
                 </div>
-            `;
-            container.appendChild(card);
-        });
-        if (window.lucide) lucide.createIcons();
+            </div>
+        `).join("");
     }
 
     renderRankedNextCameras(predictions) {
@@ -465,23 +511,23 @@ class App {
         container.innerHTML = "";
         predictions.forEach((p, idx) => {
             const card = document.createElement("div");
-            card.className = "p-3 bg-slate-900/90 rounded-xl border border-slate-800 hover:border-purple-500/50 transition-all flex items-center justify-between";
+            card.className = "p-3 bg-white rounded-lg border border-slate-300 hover:border-slate-400 transition-all flex items-center justify-between shadow-sm";
             card.innerHTML = `
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-lg bg-purple-950 border border-purple-800 flex items-center justify-center font-mono font-bold text-purple-300 text-xs">
+                    <div class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center font-mono font-bold text-slate-800 text-xs">
                         #${idx + 1}
                     </div>
                     <div>
                         <div class="flex items-center space-x-2">
-                            <span class="font-bold text-xs text-slate-200">${p.camera_name}</span>
-                            <span class="text-[10px] font-mono text-purple-400 bg-purple-950 px-1.5 py-0.2 rounded border border-purple-800">${p.camera_id}</span>
+                            <span class="font-bold text-xs text-slate-800">${p.camera_name}</span>
+                            <span class="op-badge op-badge-online">${p.camera_id}</span>
                         </div>
-                        <div class="text-[11px] text-slate-400 mt-0.5">${p.sector} &bull; ${p.distance_km} km</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${p.sector} &bull; ${p.distance_km} km</div>
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="text-sm font-black font-mono text-purple-300">${p.percentage}%</div>
-                    <div class="text-[10px] font-mono text-emerald-400 mt-0.5">ETA: ${p.eta_text}</div>
+                    <div class="text-sm font-black font-mono text-slate-900">${p.percentage}%</div>
+                    <div class="text-[10px] font-mono text-emerald-700 mt-0.5">ETA: ${p.eta_text}</div>
                 </div>
             `;
             container.appendChild(card);
@@ -515,20 +561,20 @@ class App {
                 watchingCams.add(h.target_camera_id);
             }
             const card = document.createElement("div");
-            card.className = "p-3 bg-purple-950/20 rounded-xl border border-purple-500/40 flex items-center justify-between";
+            card.className = "p-3 bg-white rounded-lg border border-slate-300 flex items-center justify-between shadow-sm";
             card.innerHTML = `
                 <div class="flex items-center space-x-3">
-                    <div class="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></div>
                     <div>
                         <div class="flex items-center space-x-2">
-                            <span class="font-mono font-black text-xs text-purple-300">${h.vehicle_plate}</span>
-                            <span class="text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${h.priority === 'CRITICAL' ? 'bg-red-600 text-white animate-pulse' : 'bg-purple-900 text-purple-200'}">${h.priority}</span>
+                            <span class="font-mono font-black text-xs text-slate-900">${h.vehicle_plate}</span>
+                            <span class="op-badge ${h.priority === 'CRITICAL' ? 'op-badge-offline' : 'op-badge-warning'}">${h.priority}</span>
                         </div>
-                        <div class="text-[11px] text-slate-300 mt-1 font-semibold">Node: ${h.target_camera_id} (${h.target_camera_name})</div>
+                        <div class="text-[11px] text-slate-600 mt-1 font-semibold">Node: ${h.target_camera_id} (${h.target_camera_name})</div>
                     </div>
                 </div>
                 <div class="text-right">
-                    <span class="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">${h.eta_text}</span>
+                    <span class="op-badge op-badge-online">${h.eta_text}</span>
                     <div class="text-[10px] text-slate-500 mt-1">${h.percentage}% Prob</div>
                 </div>
             `;
@@ -739,7 +785,7 @@ class App {
                     <div class="flex items-center space-x-2">
                         <span class="w-2 h-2 rounded-full ${data.model_loaded ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}"></span>
                         <span class="font-mono font-bold text-xs text-slate-200">${data.model_file}</span>
-                        <span class="text-[10px] bg-cyan-950 text-cyan-400 px-2 py-0.5 rounded border border-cyan-800">${data.model_size_mb} MB</span>
+                        <span class="text-[10px] bg-[#0D5A25] text-white px-2 py-0.5 rounded border border-[#13752F] font-mono">${data.model_size_mb} MB</span>
                     </div>
                     <div class="text-[11px] text-slate-400 mt-1">${data.architecture} &bull; ${data.ocr_engine}</div>
                 `;
@@ -770,7 +816,7 @@ class App {
             feedImg.src = "";
             feedImg.classList.add("hidden");
             placeholder.classList.remove("hidden");
-            btn.innerHTML = `<i data-lucide="video" class="w-4 h-4 text-cyan-400"></i><span>Start Live Webcam ANPR</span>`;
+            btn.innerHTML = `<i data-lucide="video" class="w-4 h-4 text-white"></i><span>Start Live Webcam ANPR</span>`;
         }
         if (window.lucide) lucide.createIcons();
     }
@@ -808,14 +854,14 @@ class App {
             } else {
                 data.plates_detected.forEach(p => {
                     const card = document.createElement("div");
-                    card.className = "p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between";
+                    card.className = "p-3 rounded-lg bg-[#0A3655] border border-[#0E446D] flex items-center justify-between";
                     card.innerHTML = `
                         <div>
-                            <div class="text-xs text-slate-400 uppercase font-bold">Detected Plate</div>
-                            <div class="text-lg font-black font-mono text-cyan-300 tracking-wider">${p.plate_number}</div>
-                            <div class="text-[11px] text-slate-400 mt-0.5">YOLO Conf: <strong>${Math.round(p.detection_conf*100)}%</strong> &bull; OCR Conf: <strong>${Math.round(p.ocr_conf*100)}%</strong></div>
+                            <div class="text-xs text-[#A1B3C4] uppercase font-bold">Detected Plate</div>
+                            <div class="text-lg font-black font-mono text-[#2E9147] tracking-wider">${p.plate_number}</div>
+                            <div class="text-[11px] text-[#A1B3C4] mt-0.5">YOLO Conf: <strong>${Math.round(p.detection_conf*100)}%</strong> &bull; OCR Conf: <strong>${Math.round(p.ocr_conf*100)}%</strong></div>
                         </div>
-                        <button class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs" onclick="app.searchTrajectory('${p.plate_number}'); app.switchTab('trajectory')">
+                        <button class="px-3 py-1.5 rounded-lg bg-[#13752F] hover:bg-[#0D5A25] text-white font-bold text-xs" onclick="app.searchTrajectory('${p.plate_number}'); app.switchTab('trajectory')">
                             Track Trajectory →
                         </button>
                     `;
@@ -866,17 +912,17 @@ class App {
             ticker.innerHTML = "";
             detections.forEach(det => {
                 const card = document.createElement("div");
-                card.className = "p-3 bg-slate-900/80 rounded-xl border border-slate-800 hover:border-cyan-500/50 transition-all flex items-center justify-between";
+                card.className = "p-3 bg-[#062B4A] rounded-lg border border-[#0E446D] hover:border-[#13752F] transition-all flex items-center justify-between shadow-sm";
                 card.innerHTML = `
                     <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 rounded-lg bg-slate-800/80 flex items-center justify-center text-slate-300 font-mono text-xs">
+                        <div class="w-9 h-9 rounded-lg bg-[#0A3655] flex items-center justify-center text-[#2E9147] font-mono text-xs font-bold border border-[#0E446D]">
                             ${det.camera_id.replace('CAM-', '#')}
                         </div>
                         <div>
                             <div class="flex items-center space-x-2">
-                                <span class="font-mono font-extrabold text-sm tracking-wide px-2 py-0.5 rounded border bg-cyan-500/10 text-cyan-300 border-cyan-500/30">${det.plate_number}</span>
+                                <span class="font-mono font-extrabold text-sm tracking-wide px-2 py-0.5 rounded border bg-[#0D5A25]/30 text-[#2E9147] border-[#13752F]">${det.plate_number}</span>
                             </div>
-                            <div class="text-[11px] text-slate-400 mt-1">${det.camera_name} &bull; <span class="text-slate-500">${det.sector}</span></div>
+                            <div class="text-[11px] text-[#A1B3C4] mt-1">${det.camera_name} &bull; <span class="text-[#A1B3C4]">${det.sector}</span></div>
                         </div>
                     </div>
                     <div class="text-right text-xs">
@@ -1012,29 +1058,29 @@ class App {
 
             html += `
                 <div class="relative pl-6 pb-6 border-l-2 ${isAnomaly ? 'border-red-500' : 'border-slate-800'} last:border-transparent">
-                    <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full ${isAnomaly ? 'bg-red-500 ring-4 ring-red-950 animate-pulse' : 'bg-cyan-500 ring-4 ring-cyan-950'} flex items-center justify-center text-[10px] font-bold text-black font-mono">
+                    <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full ${isAnomaly ? 'bg-red-500 ring-4 ring-red-950 animate-pulse' : 'bg-[#13752F] ring-4 ring-[#0D5A25]'} flex items-center justify-center text-[10px] font-bold text-white font-mono">
                         ${idx + 1}
                     </div>
-                    <div class="bg-slate-900/80 p-3.5 rounded-xl border ${isAnomaly ? 'border-red-500/60 bg-red-950/20' : 'border-slate-800'} space-y-2">
+                    <div class="bg-[#062B4A] p-3.5 rounded-lg border ${isAnomaly ? 'border-red-700 bg-red-950/40' : 'border-[#0E446D]'} space-y-2 shadow-sm">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2">
-                                <span class="font-mono font-bold text-xs text-cyan-300">${timeStr}</span>
+                                <span class="font-mono font-bold text-xs text-[#2E9147]">${timeStr}</span>
                                 <span class="text-[10px] px-2 py-0.5 rounded font-bold uppercase border ${statusBadge}">${obsStatus}</span>
                             </div>
-                            <span class="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/40">${wp.camera_id}</span>
+                            <span class="text-[10px] font-mono text-[#F7F6F1] bg-[#0A3655] px-1.5 py-0.5 rounded border border-[#0E446D] font-bold">${wp.camera_id}</span>
                         </div>
                         <div>
-                            <div class="font-bold text-xs text-slate-200">${wp.camera_name}</div>
-                            <div class="text-[11px] text-slate-400 mt-0.5">${wp.sector} &bull; Direction: <strong class="text-slate-300">${wp.direction || 'Standard Flow'}</strong></div>
+                            <div class="font-bold text-xs text-[#F7F6F1]">${wp.camera_name}</div>
+                            <div class="text-[11px] text-[#A1B3C4] mt-0.5">${wp.sector} &bull; Direction: <strong class="text-[#F7F6F1]">${wp.direction || 'Standard Flow'}</strong></div>
                         </div>
-                        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/60 text-[11px]">
-                            <div><span class="text-slate-500">Transit:</span> <strong class="text-slate-300 font-mono">${durationStr}</strong></div>
-                            <div><span class="text-slate-500">Dist:</span> <strong class="text-slate-300 font-mono">${wp.leg_distance_km || 0} km</strong></div>
-                            <div><span class="text-slate-500">Speed:</span> <strong class="text-slate-300 font-mono">${wp.leg_speed_kmh || wp.instant_speed_kmh || 0} km/h</strong></div>
+                        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-[#0E446D] text-[11px]">
+                            <div><span class="text-[#A1B3C4]">Transit:</span> <strong class="text-[#F7F6F1] font-mono">${durationStr}</strong></div>
+                            <div><span class="text-[#A1B3C4]">Dist:</span> <strong class="text-[#F7F6F1] font-mono">${wp.leg_distance_km || 0} km</strong></div>
+                            <div><span class="text-[#A1B3C4]">Speed:</span> <strong class="text-[#F7F6F1] font-mono">${wp.leg_speed_kmh || wp.instant_speed_kmh || 0} km/h</strong></div>
                         </div>
-                        <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-                            <span>OCR Quality: <strong class="text-emerald-400">${ocrPct}%</strong></span>
-                            <span>Plate: <strong class="font-mono text-slate-300">${wp.plate_number || document.getElementById("traj-search-input").value}</strong></span>
+                        <div class="flex items-center justify-between text-[10px] text-[#A1B3C4] pt-1">
+                            <span>OCR Quality: <strong class="text-[#2E9147] font-bold">${ocrPct}%</strong></span>
+                            <span>Plate: <strong class="font-mono text-[#F7F6F1] font-bold">${wp.plate_number || document.getElementById("traj-search-input").value}</strong></span>
                         </div>
                         ${isAnomaly ? `<div class="mt-2 p-1.5 rounded bg-red-950/80 border border-red-600 text-red-200 text-[10px] font-semibold">⚠️ ${wp.anomaly_reason}</div>` : ''}
                     </div>
@@ -1061,12 +1107,12 @@ class App {
             tbody.innerHTML = "";
             list.forEach(item => {
                 const tr = document.createElement("tr");
-                tr.className = "border-b border-slate-800/60 hover:bg-slate-800/40 text-xs";
+                tr.className = "border-b border-[#0E446D] hover:bg-[#0A3655] text-xs";
                 const sevBadge = item.severity === 'CRITICAL'
                     ? 'bg-red-500/20 text-red-400 border border-red-500/40'
                     : item.severity === 'HIGH'
                     ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                    : 'bg-sky-500/20 text-sky-400 border border-sky-500/40';
+                    : 'bg-[#0D5A25]/30 text-[#2E9147] border border-[#13752F]';
 
                 tr.innerHTML = `
                     <td class="py-3 px-4 font-mono font-bold text-amber-400">${item.plate_number}</td>
@@ -1219,9 +1265,9 @@ class App {
         tbody.innerHTML = "";
         this.cameras.forEach(cam => {
             const tr = document.createElement("tr");
-            tr.className = "border-b border-slate-800/60 hover:bg-slate-800/40 text-xs";
+            tr.className = "border-b border-[#0E446D] hover:bg-[#0A3655] text-xs";
             tr.innerHTML = `
-                <td class="py-3 px-4 font-mono font-bold text-cyan-400">${cam.id}</td>
+                <td class="py-3 px-4 font-mono font-bold text-[#2E9147]">${cam.id}</td>
                 <td class="py-3 px-4 text-slate-200 font-semibold">${cam.name}</td>
                 <td class="py-3 px-4 text-slate-400">${cam.sector}</td>
                 <td class="py-3 px-4 text-slate-300">${cam.direction}</td>
@@ -1273,10 +1319,10 @@ class App {
                         <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between mb-2">
                             <div>
                                 <div class="text-[10px] text-slate-400 uppercase font-bold">Plate @ ${p.timestamp_offset_sec}s</div>
-                                <div class="text-lg font-black font-mono text-cyan-300 tracking-wider">${p.plate_number}</div>
+                                <div class="text-lg font-black font-mono text-[#2E9147] tracking-wider">${p.plate_number}</div>
                                 <div class="text-[11px] text-slate-400 mt-0.5">YOLO: <strong>${Math.round(p.detection_conf*100)}%</strong> &bull; OCR: <strong>${Math.round(p.ocr_conf*100)}%</strong></div>
                             </div>
-                            <button class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs" onclick="app.searchTrajectory('${p.plate_number}'); app.switchTab('trajectory')">
+                            <button class="px-3 py-1.5 rounded-lg bg-[#13752F] hover:bg-[#0D5A25] text-white font-bold text-xs" onclick="app.searchTrajectory('${p.plate_number}'); app.switchTab('trajectory')">
                                 Track Trajectory →
                             </button>
                         </div>
@@ -1311,7 +1357,7 @@ class App {
             try {
                 const res = await fetch(`/api/cameras/${camId}/disconnect-webcam`, { method: "POST" });
                 if (btnText) btnText.textContent = "Connect Webcam";
-                if (btn) btn.className = "px-2 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white font-bold text-[11px] flex items-center space-x-1";
+                if (btn) btn.className = "px-2 py-1 rounded bg-[#13752F] hover:bg-[#0D5A25] text-white font-bold text-[11px] flex items-center space-x-1";
                 if (badge) { badge.textContent = "OFFLINE"; badge.className = "op-badge opacity-70"; }
                 if (dot) dot.className = "status-dot offline";
                 if (img) img.src = `/api/video-feed/${camId}?t=` + Date.now();
@@ -1412,7 +1458,7 @@ class App {
 
         const freeMapSelect = document.getElementById("free-map-theme-select");
         if (freeMapSelect) {
-            freeMapSelect.value = mapController.currentTheme || "carto-dark";
+            freeMapSelect.value = mapController.currentTheme || "carto-voyager";
             freeMapSelect.addEventListener("change", (e) => {
                 const selectedTheme = e.target.value;
                 mapController.setMapTheme(selectedTheme);
@@ -1437,6 +1483,59 @@ class App {
                 if (e.target.files && e.target.files[0]) {
                     this.inspectUploadedVideo(e.target.files[0]);
                 }
+            });
+        }
+
+        // Excel Export & System Open listeners
+        const excelMenuBtn = document.getElementById("btn-excel-menu");
+        const excelDropdown = document.getElementById("excel-menu-dropdown");
+        const downloadExcelBtn = document.getElementById("btn-download-excel");
+        const openExcelBtn = document.getElementById("btn-open-excel-system");
+        const sidebarExcelBtn = document.getElementById("btn-sidebar-excel");
+
+        if (excelMenuBtn && excelDropdown) {
+            excelMenuBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                excelDropdown.classList.toggle("hidden");
+            });
+            document.addEventListener("click", (e) => {
+                if (excelDropdown && !excelDropdown.contains(e.target) && e.target !== excelMenuBtn) {
+                    excelDropdown.classList.add("hidden");
+                }
+            });
+        }
+
+        if (downloadExcelBtn) {
+            downloadExcelBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                window.location.href = "/api/export/excel";
+                alertsManager.showToast("Excel Export Started", "Downloading vehicle_data.xlsx with all database tables...", "INFO");
+            });
+        }
+
+        if (openExcelBtn) {
+            openExcelBtn.addEventListener("click", async (e) => {
+                e.preventDefault();
+                try {
+                    alertsManager.showToast("Opening Excel", "Exporting data and launching spreadsheet application on host...", "INFO");
+                    const res = await fetch("/api/export/excel/open", { method: "POST" });
+                    const data = await res.json();
+                    if (res.ok) {
+                        alertsManager.showToast("Excel Opened", data.message || "Excel file opened on system.", "HIGH");
+                    } else {
+                        alertsManager.showToast("Launch Failed", data.detail || "Could not open Excel file natively.", "HIGH");
+                    }
+                } catch(err) {
+                    alertsManager.showToast("Error", "Failed to communicate with backend server.", "HIGH");
+                }
+            });
+        }
+
+        if (sidebarExcelBtn) {
+            sidebarExcelBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                window.open("/api/export/excel", "_blank");
+                alertsManager.showToast("Excel Export", "Downloading vehicle_data.xlsx with all detected license plates...", "INFO");
             });
         }
     }

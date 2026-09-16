@@ -10,7 +10,7 @@ class MapController {
         this.heatCameraMarkersGroup = null;
         this.predictiveLayerGroup = null;
         
-        this.currentTheme = localStorage.getItem("free_map_theme") || "carto-dark";
+        this.currentTheme = localStorage.getItem("free_map_theme") || "carto-voyager";
         this.tileLayers = [];
     }
 
@@ -249,13 +249,13 @@ class MapController {
                 const marker = L.marker(pos, { icon }).addTo(this.predictiveLayerGroup);
                 marker.bindPopup(`
                     <div style="min-width: 220px; font-family:'Inter', sans-serif;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px;">
-                            <span style="font-weight:bold; font-size:11px; color:#10b981; text-transform:uppercase;">🟢 OBSERVED CHECKPOINT</span>
-                            <span style="font-size:10px; background:#0f172a; padding:2px 6px; border-radius:4px; color:#38bdf8;">${wp.camera_id}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #0E446D; padding-bottom:4px; margin-bottom:6px;">
+                            <span style="font-weight:bold; font-size:11px; color:#2E9147; text-transform:uppercase;">🟢 OBSERVED CHECKPOINT</span>
+                            <span style="font-size:10px; background:#0A3655; padding:2px 6px; border-radius:4px; color:#F7F6F1; font-family:monospace;">${wp.camera_id}</span>
                         </div>
-                        <div style="font-size:12px; font-weight:700; color:#f8fafc;">${wp.camera_name || wp.name}</div>
-                        <div style="font-size:11px; color:#94a3b8;">${wp.sector}</div>
-                        <div style="margin-top:6px; font-size:11px; color:#cbd5e1;">
+                        <div style="font-size:12px; font-weight:700; color:#F7F6F1;">${wp.camera_name || wp.name}</div>
+                        <div style="font-size:11px; color:#A1B3C4;">${wp.sector}</div>
+                        <div style="margin-top:6px; font-size:11px; color:#A1B3C4;">
                             <div>Timestamp: <strong>${wp.timestamp ? wp.timestamp.split(' ')[1] : 'Recent'}</strong></div>
                             <div>Conf: <strong>${Math.round((wp.ocr_conf || 0.9)*100)}%</strong></div>
                         </div>
@@ -263,12 +263,12 @@ class MapController {
                 `);
             });
 
-            // Solid Cyan Polyline for Observed Route
+            // Solid Forest Green Polyline for Observed Route
             if (observedCoords.length > 1) {
                 L.polyline(observedCoords, {
-                    color: "#06b6d4",
-                    weight: 4,
-                    opacity: 0.9
+                    color: "#13752F",
+                    weight: 5,
+                    opacity: 0.95
                 }).addTo(this.predictiveLayerGroup);
             }
         }
@@ -286,7 +286,7 @@ class MapController {
                         if (step.status_type === "INFERRED") {
                             const icon = L.divIcon({
                                 className: "custom-waypoint-icon inferred",
-                                html: `<span style="color:#000;">⚡</span>`,
+                                html: `<span style="color:#FFF;">⚡</span>`,
                                 iconSize: [22, 22],
                                 iconAnchor: [11, 11]
                             });
@@ -294,12 +294,12 @@ class MapController {
                             const m = L.marker(pos, { icon }).addTo(this.predictiveLayerGroup);
                             m.bindPopup(`
                                 <div style="min-width: 200px; font-family:'Inter', sans-serif;">
-                                    <div style="font-weight:bold; font-size:11px; color:#f59e0b; text-transform:uppercase; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px;">
+                                    <div style="font-weight:bold; font-size:11px; color:#F6A126; text-transform:uppercase; border-bottom:1px solid #0E446D; padding-bottom:4px; margin-bottom:6px;">
                                         🟡 INFERRED LOCATION (Unmonitored Junction)
                                     </div>
-                                    <div style="font-size:12px; font-weight:700; color:#f8fafc;">${step.name}</div>
-                                    <div style="font-size:11px; color:#94a3b8;">${step.sector} (${step.node_id})</div>
-                                    <div style="margin-top:6px; font-size:11px; color:#f59e0b; background:#451a03; padding:4px 6px; border-radius:4px;">
+                                    <div style="font-size:12px; font-weight:700; color:#F7F6F1;">${step.name}</div>
+                                    <div style="font-size:11px; color:#A1B3C4;">${step.sector} (${step.node_id})</div>
+                                    <div style="margin-top:6px; font-size:11px; color:#F6A126; background:#0A3655; padding:4px 6px; border-radius:4px; border:1px solid #0E446D;">
                                         Hypothetical corridor connection
                                     </div>
                                 </div>
@@ -308,13 +308,13 @@ class MapController {
                     }
                 });
 
-                // Amber Dashed Polyline for Inferred Route Leg
+                // Saffron Dashed Polyline for Inferred Route Leg
                 if (inferredCoords.length > 1) {
                     L.polyline(inferredCoords, {
-                        color: "#f59e0b",
-                        weight: 3,
+                        color: "#F6A126",
+                        weight: 3.5,
                         dashArray: "6, 6",
-                        opacity: 0.75
+                        opacity: 0.85
                     }).addTo(this.predictiveLayerGroup);
                 }
             });
@@ -329,7 +329,7 @@ class MapController {
 
                     const icon = L.divIcon({
                         className: "custom-waypoint-icon predicted",
-                        html: `<span style="font-size:10px; font-weight:900;">${pred.percentage}%</span>`,
+                        html: `<span style="font-size:10px; font-weight:900; color:#FFF;">${pred.percentage}%</span>`,
                         iconSize: [34, 34],
                         iconAnchor: [17, 17]
                     });
@@ -339,25 +339,25 @@ class MapController {
                     // Pulsing radius circle around predicted camera
                     L.circle(pos, {
                         radius: 250,
-                        color: "#c084fc",
-                        fillColor: "#a855f7",
-                        fillOpacity: 0.15,
-                        weight: 1.5,
+                        color: "#D98212",
+                        fillColor: "#F6A126",
+                        fillOpacity: 0.2,
+                        weight: 2,
                         dashArray: "4, 4"
                     }).addTo(this.predictiveLayerGroup);
 
                     m.bindPopup(`
                         <div style="min-width: 240px; font-family:'Inter', sans-serif;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px;">
-                                <span style="font-weight:bold; font-size:11px; color:#c084fc; text-transform:uppercase;">🟣 PREDICTED NEXT CAMERA</span>
-                                <span style="font-size:11px; background:#581c87; color:#f5d0fe; padding:2px 6px; border-radius:4px; font-weight:bold;">${pred.percentage}% PROB</span>
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #0E446D; padding-bottom:4px; margin-bottom:6px;">
+                                <span style="font-weight:bold; font-size:11px; color:#F6A126; text-transform:uppercase;">🎯 PREDICTED NEXT CAMERA</span>
+                                <span style="font-size:11px; background:#0D5A25; color:#FFF; padding:2px 6px; border-radius:4px; font-weight:bold;">${pred.percentage}% PROB</span>
                             </div>
-                            <div style="font-size:13px; font-weight:bold; color:#f8fafc;">${pred.camera_name}</div>
-                            <div style="font-size:11px; color:#94a3b8;">${pred.sector} (${pred.camera_id})</div>
-                            <div style="margin-top:8px; background:#0f172a; padding:8px; border-radius:6px; font-size:11px; border:1px solid #334155;">
-                                <div><strong style="color:#c084fc;">Expected ETA:</strong> ${pred.eta_text}</div>
-                                <div><strong style="color:#94a3b8;">Distance:</strong> ${pred.distance_km} km</div>
-                                <div style="margin-top:4px; color:#e2e8f0; font-size:10px;">Handoff Watch Queue: <span style="color:#34d399; font-weight:bold;">ACTIVE</span></div>
+                            <div style="font-size:13px; font-weight:bold; color:#F7F6F1;">${pred.camera_name}</div>
+                            <div style="font-size:11px; color:#A1B3C4;">${pred.sector} (${pred.camera_id})</div>
+                            <div style="margin-top:8px; background:#0A3655; padding:8px; border-radius:6px; font-size:11px; border:1px solid #0E446D;">
+                                <div><strong style="color:#F6A126;">Expected ETA:</strong> ${pred.eta_text}</div>
+                                <div><strong style="color:#A1B3C4;">Distance:</strong> ${pred.distance_km} km</div>
+                                <div style="margin-top:4px; color:#F7F6F1; font-size:10px;">Handoff Watch Queue: <span style="color:#2E9147; font-weight:bold;">ACTIVE</span></div>
                             </div>
                         </div>
                     `);

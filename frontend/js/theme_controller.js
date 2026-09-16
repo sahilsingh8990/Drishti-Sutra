@@ -1,6 +1,6 @@
 // ============================================================
 // DRISHTI-SUTRA INTEGRATED TRAFFIC COMMAND CENTRE (ICCC)
-// Centralized Theme Controller (Dark <-> Light White/Black)
+// Centralized Theme Controller (Dark <-> Light Brand Tokens)
 // ============================================================
 
 class ThemeController {
@@ -21,6 +21,7 @@ class ThemeController {
 
         this.currentTheme = theme;
         localStorage.setItem(this.STORAGE_KEY, theme);
+        localStorage.setItem("drishti_theme", theme);
 
         // 1. Update HTML & Body Attributes & Class
         document.documentElement.setAttribute("data-theme", theme);
@@ -34,10 +35,10 @@ class ThemeController {
             document.body.classList.remove("theme-light");
         }
 
-        // 2. Manage Dynamic Overrides for Light Mode (White/Black Contrast)
+        // 2. Manage Dynamic Overrides for Light Mode & Dark Mode
         this.applyDynamicStyleOverrides(theme);
 
-        // 3. Update Theme Toggle Button UI (Icon, Text, Accessibility)
+        // 3. Update Theme Toggle Button UI
         this.updateThemeIcon(theme);
 
         // 4. Synchronize GIS Leaflet Map Tiles
@@ -106,153 +107,196 @@ class ThemeController {
     applyDynamicStyleOverrides(theme) {
         let styleEl = document.getElementById("drishti-theme-override");
 
-        if (theme === "light") {
-            if (!styleEl) {
-                styleEl = document.createElement("style");
-                styleEl.id = "drishti-theme-override";
-                document.head.appendChild(styleEl);
-            }
+        if (!styleEl) {
+            styleEl = document.createElement("style");
+            styleEl.id = "drishti-theme-override";
+            document.head.appendChild(styleEl);
+        }
 
+        if (theme === "light") {
             styleEl.textContent = `
-                /* High-Priority Operational Light Theme (Pure White & Black Contrast) */
+                /* High-Priority Operational Brand Light Theme (#062B4A Navy Header/Sidebar, #FFFFFF Cards, #13752F Green Buttons) */
                 html.theme-light, html.theme-light body, html.theme-light main {
-                    background-color: #f4f6f9 !important;
-                    color: #0f172a !important;
+                    background-color: #F7F6F1 !important;
+                    color: #062B4A !important;
                 }
 
                 html.theme-light header {
-                    background-color: #ffffff !important;
-                    border-color: #cbd5e1 !important;
-                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+                    background-color: #041F36 !important;
+                    border-color: #0E446D !important;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
                 }
 
                 html.theme-light aside {
-                    background-color: #ffffff !important;
-                    border-color: #cbd5e1 !important;
+                    background-color: #041F36 !important;
+                    border-color: #0E446D !important;
                 }
 
-                /* Operational Panels, Cards, Stat Boxes & Factor Chips */
+                /* Panels, Cards & Stat Boxes on Light Surface */
                 html.theme-light .op-panel,
                 html.theme-light .op-card,
                 html.theme-light .op-stat-box,
                 html.theme-light .factor-chip {
-                    background-color: #ffffff !important;
-                    border-color: #cbd5e1 !important;
-                    color: #0f172a !important;
-                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+                    background-color: #FFFFFF !important;
+                    border-color: #CBD3D8 !important;
+                    color: #062B4A !important;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
                 }
 
                 html.theme-light .op-panel-header {
-                    background-color: #f1f5f9 !important;
-                    border-color: #e2e8f0 !important;
-                    color: #0f172a !important;
+                    background-color: #F0F4F7 !important;
+                    border-color: #CBD3D8 !important;
+                    color: #062B4A !important;
                 }
 
-                /* Card Containers & Grid Elements */
-                html.theme-light div.bg-slate-900,
-                html.theme-light div.bg-slate-950,
-                html.theme-light div.bg-slate-800,
-                html.theme-light div.bg-slate-800\\/80,
-                html.theme-light div.bg-slate-800\\/60,
-                html.theme-light div.bg-slate-900\\/80,
-                html.theme-light div.bg-slate-900\\/90,
-                html.theme-light div.bg-sky-950,
-                html.theme-light div.bg-purple-950,
-                html.theme-light div.bg-cyan-950 {
-                    background-color: #ffffff !important;
-                    border-color: #cbd5e1 !important;
-                    color: #0f172a !important;
+                /* Light Mode: Primary Headings & Values on White Panels */
+                html.theme-light .op-panel h1, 
+                html.theme-light .op-panel h2, 
+                html.theme-light .op-panel h3, 
+                html.theme-light .op-panel h4, 
+                html.theme-light .op-panel h5, 
+                html.theme-light .op-panel h6,
+                html.theme-light .op-panel .text-\[\#F7F6F1\],
+                html.theme-light .op-card .text-\[\#F7F6F1\],
+                html.theme-light .op-stat-box .text-\[\#F7F6F1\],
+                html.theme-light .op-panel .text-white,
+                html.theme-light .op-card .text-white,
+                html.theme-light #pred-resolved-plate,
+                html.theme-light #pred-last-node,
+                html.theme-light #pred-raw-ocr,
+                html.theme-light #pred-norm-ocr,
+                html.theme-light #kpi-total-detections,
+                html.theme-light #kpi-active-cameras {
+                    color: #062B4A !important; /* Deep Navy Text on White Cards */
                 }
 
-                /* Typography Text Overrides */
-                html.theme-light h1, html.theme-light h2, html.theme-light h3, html.theme-light h4, html.theme-light h5, html.theme-light h6 {
-                    color: #0f172a !important;
-                }
-
-                html.theme-light .text-slate-100,
-                html.theme-light .text-slate-200,
+                /* Light Mode: Secondary Labels, Subtitles & Grey Text on White Panels */
+                html.theme-light .op-panel .text-\[\#A1B3C4\],
+                html.theme-light .op-panel .text-\[\#CBD3D8\],
+                html.theme-light .op-card .text-\[\#A1B3C4\],
+                html.theme-light .op-card .text-\[\#CBD3D8\],
+                html.theme-light .op-stat-box .text-\[\#A1B3C4\],
+                html.theme-light .op-stat-box .text-\[\#CBD3D8\],
+                html.theme-light .text-slate-400,
                 html.theme-light .text-slate-300,
-                html.theme-light .text-white {
-                    color: #0f172a !important;
+                html.theme-light .text-slate-500,
+                html.theme-light .text-gray-400,
+                html.theme-light .text-gray-500 {
+                    color: #1E293B !important; /* Dark Charcoal Slate - 100% Crisp & Visible on White Cards */
                 }
 
-                html.theme-light .text-slate-400 {
-                    color: #475569 !important;
+                /* Dark Navy Container Exceptions (Header, Sidebar, CCTV Tiles, Live Ticker Cards, Trajectory Timeline Cards) */
+                header, aside, .cctv-tile, #live-detection-ticker .op-card, #trajectory-timeline .bg-\[\#062B4A\], #trajectory-timeline .bg-\[\#0A3655\] {
+                    background-color: #041F36 !important;
+                    color: #F7F6F1 !important;
                 }
 
-                html.theme-light .text-slate-500 {
-                    color: #64748b !important;
+                #trajectory-timeline .bg-\[\#062B4A\] *,
+                #trajectory-timeline .bg-\[\#0A3655\] * {
+                    color: #F7F6F1 !important;
+                }
+                #trajectory-timeline .text-\[\#A1B3C4\],
+                #trajectory-timeline .text-\[\#2E9147\] {
+                    color: #CBD3D8 !important;
                 }
 
-                /* Borders */
-                html.theme-light .border-slate-800,
-                html.theme-light .border-slate-900,
-                html.theme-light .border-slate-700,
-                html.theme-light .border-sky-800,
-                html.theme-light .border-purple-800,
-                html.theme-light .border-cyan-800 {
-                    border-color: #cbd5e1 !important;
+                header .text-\[\#A1B3C4\],
+                aside .text-\[\#A1B3C4\],
+                .cctv-tile .text-\[\#A1B3C4\],
+                .cctv-tile-header .text-\[\#A1B3C4\],
+                .cctv-tile-footer .text-\[\#A1B3C4\],
+                #live-detection-ticker .text-\[\#A1B3C4\],
+                #live-detection-ticker .card-time-val,
+                .cctv-tile .text-slate-400,
+                #live-detection-ticker .text-slate-400 {
+                    color: #CBD3D8 !important; /* Bright Silver-Grey on Dark Navy */
                 }
 
-                /* Navigation Buttons & Sidebar Tabs */
-                html.theme-light .tab-btn {
-                    color: #475569 !important;
-                }
-                html.theme-light .tab-btn:hover {
-                    background-color: #f1f5f9 !important;
-                    color: #0f172a !important;
-                }
-                html.theme-light .tab-btn.bg-sky-950\\/80,
-                html.theme-light .tab-btn[class*="bg-sky-950"] {
-                    background-color: #e0f2fe !important;
-                    color: #0284c7 !important;
-                    border-color: #0284c7 !important;
+                header .text-\[\#F7F6F1\],
+                aside .text-\[\#F7F6F1\],
+                .cctv-tile .text-\[\#F7F6F1\],
+                #live-detection-ticker .text-\[\#F7F6F1\] {
+                    color: #F7F6F1 !important; /* Crisp White on Dark Navy */
                 }
 
-                /* Form Controls, Inputs & Selects */
+                .bg-\[\#0A3655\],
+                .bg-\[\#0A3655\] .text-\[\#A1B3C4\],
+                .bg-\[\#0A3655\] button,
+                html.theme-light .bg-\[\#0A3655\] .text-\[\#A1B3C4\],
+                html.theme-light .bg-\[\#0A3655\] button {
+                    color: #CBD3D8 !important;
+                }
+
+                /* Form Controls & Inputs in Light Mode */
                 html.theme-light .op-input,
                 html.theme-light select,
-                html.theme-light input,
-                html.theme-light textarea {
-                    background-color: #ffffff !important;
-                    border-color: #cbd5e1 !important;
-                    color: #0f172a !important;
+                html.theme-light input {
+                    background-color: #FFFFFF !important;
+                    border-color: #CBD3D8 !important;
+                    color: #062B4A !important;
                 }
 
-                /* Buttons */
-                html.theme-light .op-btn,
-                html.theme-light button:not(.op-btn-primary):not(.op-btn-purple):not(.op-btn-danger):not(.tab-btn) {
-                    background-color: #ffffff !important;
-                    border-color: #cbd5e1 !important;
-                    color: #1e293b !important;
-                }
-
-                /* Tables */
+                /* Table Styling in Light Mode */
                 html.theme-light .op-table th {
-                    background-color: #f1f5f9 !important;
-                    color: #475569 !important;
-                    border-color: #cbd5e1 !important;
+                    background-color: #F0F4F7 !important;
+                    color: #062B4A !important;
+                    border-color: #CBD3D8 !important;
                 }
-
                 html.theme-light .op-table td {
-                    background-color: #ffffff !important;
-                    border-color: #e2e8f0 !important;
-                    color: #1e293b !important;
+                    background-color: #FFFFFF !important;
+                    border-color: #EEF1F2 !important;
+                    color: #062B4A !important;
                 }
-
                 html.theme-light .op-table tr:hover td {
-                    background-color: #f8fafc !important;
+                    background-color: #F7F6F1 !important;
                 }
 
-                /* GIS Map Container */
-                html.theme-light .leaflet-container {
-                    background-color: #f1f5f9 !important;
+                /* Header and Sidebar Text Exemptions (Header & Sidebar remain dark navy background) */
+                header, aside {
+                    background-color: #041F36 !important;
+                }
+                header .text-\[\#A1B3C4\] { color: #A1B3C4 !important; }
+                header .text-\[\#F7F6F1\] { color: #F7F6F1 !important; }
+                aside .text-\[\#A1B3C4\] { color: #A1B3C4 !important; }
+                aside .text-\[\#F7F6F1\] { color: #F7F6F1 !important; }
+
+                /* Form Controls & Inputs */
+                html.theme-light .op-input,
+                html.theme-light select,
+                html.theme-light input {
+                    background-color: #FFFFFF !important;
+                    border-color: #CBD3D8 !important;
+                    color: #062B4A !important;
+                }
+
+                /* Table Styling */
+                html.theme-light .op-table th {
+                    background-color: #F0F4F7 !important;
+                    color: #062B4A !important;
+                    border-color: #CBD3D8 !important;
+                }
+                html.theme-light .op-table td {
+                    background-color: #FFFFFF !important;
+                    border-color: #EEF1F2 !important;
+                    color: #062B4A !important;
+                }
+                html.theme-light .op-table tr:hover td {
+                    background-color: #F7F6F1 !important;
                 }
             `;
         } else {
-            if (styleEl) {
-                styleEl.remove();
-            }
+            styleEl.textContent = `
+                /* High-Priority Operational Brand Dark Theme (#031D33 Navy Canvas, #041F36 Header/Sidebar, #062B4A Cards, #13752F Green Actions) */
+                html, body, main {
+                    background-color: #031D33 !important;
+                    color: #F7F6F1 !important;
+                }
+
+                header, aside {
+                    background-color: #041F36 !important;
+                    border-color: #0E446D !important;
+                }
+            `;
         }
     }
 }

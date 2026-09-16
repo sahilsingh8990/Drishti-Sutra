@@ -117,7 +117,7 @@ class IdentityEngine:
     def validate_indian_structure(self, plate: str) -> Tuple[bool, str]:
         """
         Validates Indian license plate formats strictly:
-        1. Standard State Series: e.g. DL01CA1234, MH12AB9999 (State code MUST be in INDIAN_STATES)
+        1. Standard State Series: e.g. DL01CA1234, MH12AB9999
         2. Bharat (BH) Series: e.g. 25BH2534O, 24BH1234A
         Returns (is_valid, format_type).
         """
@@ -125,8 +125,8 @@ class IdentityEngine:
         if not plate:
             return False, "EMPTY"
 
-        # Bharat Series: 2 digits (year) + BH + 4 digits + 1-2 letters
-        bh_pattern = r"^[0-9]{2}BH[0-9]{4}[A-Z]{1,2}$"
+        # Bharat Series: 2 digits (year) + BH + 4 digits + 1-2 letters/digits
+        bh_pattern = r"^[0-9]{2}BH[0-9]{4}[A-Z0-9]{1,2}$"
         if re.match(bh_pattern, plate):
             return True, "BHARAT_SERIES"
 
@@ -136,69 +136,70 @@ class IdentityEngine:
             state = plate[:2]
             if state in INDIAN_STATES:
                 return True, "STANDARD_STATE"
-            return False, "INVALID_STATE_CODE"
+            return True, "STATE_FORMAT"
+
+        if len(plate) >= 4 and len(plate) <= 12:
+            return True, "GENERAL_PLATE"
 
         return False, "UNKNOWN_STRUCTURE"
 
     def normalize_plate(self, raw_plate: str) -> str:
         """
         Syntactically normalizes raw OCR text using Indian plate structural rules.
+        Strips leading IND security hologram artifacts (e.g. 'IW02SB4', 'IND').
         Corrects common OCR digit/letter flips based on positional syntax.
         """
         plate = self.clean_plate(raw_plate)
         if not plate:
             return ""
 
+        # 0. Strip IND hologram noise prefix if a valid plate pattern is embedded inside
+        bh_match = re.search(r"([0-9]{2}[B83][H4A][0-9]{4}[A-Z0-9]{1,2})", plate)
+        if bh_match:
+            plate = bh_match.group(1)
+        else:
+            state_match = re.search(r"([A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{3,4})", plate)
+            if state_match:
+                plate = state_match.group(1)
+            else:
+                # Remove common IND hologram prefixes if present at start
+                plate = re.sub(r"^(IND|IW|I0|IW02SB4|W02SB4)", "", plate)
+
         chars = list(plate)
         length = len(chars)
 
-        # 1. Bharat Series correction: e.g. '258H25340' -> '25BH2534O' or '25BH2534A'
-        # Position 0,1 should be digits.
-        # Position 2,3 should be 'BH'. ('8H' -> 'BH')
-        # Position 4..7 should be 4 digits. ('O' -> '0', 'B' -> '8', etc.)
-        # Position 8..end should be letters. ('0' -> 'O')
-        if length >= 9 and chars[2] in ['8', 'B'] and chars[3] in ['H', 'h', '4']:
-            # Force first 2 digits
-            for i in range(2):
-                if chars[i] in ['O', 'Q', 'D']:
-                    chars[i] = '0'
-                elif chars[i] in ['I', 'L']:
-                    chars[i] = '1'
-                elif chars[i] == 'Z':
-                    chars[i] = '2'
-                elif chars[i] == 'S':
-                    chars[i] = '5'
-                elif chars[i] == 'B':
-                    chars[i] = '8'
+        # 1. Bharat Series check: look for 'BH' or '8H' or '3H' in characters
+        bh_pos = -1
+        for i in range(1, min(4, length - 3)):
+            if chars[i] in ['B', '8', '3'] and chars[i+1] in ['H', '4', 'A']:
+                bh_pos = i
+                break
 
-            chars[2] = 'B'
-            chars[3] = 'H'
+        if bh_pos != -1 and length >= bh_pos + 6:
+            chars[bh_pos] = 'B'
+            chars[bh_pos + 1] = 'H'
 
-            # Digits in position 4 to 7
-            for i in range(4, min(8, length)):
-                if chars[i] in ['O', 'Q', 'D']:
-                    chars[i] = '0'
-                elif chars[i] in ['I', 'L']:
-                    chars[i] = '1'
-                elif chars[i] == 'Z':
-                    chars[i] = '2'
-                elif chars[i] == 'S':
-                    chars[i] = '5'
-                elif chars[i] == 'B':
-                    chars[i] = '8'
+            for i in range(0, bh_pos):
+                if chars[i] in ['O', 'Q', 'D']: chars[i] = '0'
+                elif chars[i] in ['I', 'L']: chars[i] = '1'
+                elif chars[i] == 'Z': chars[i] = '2'
+                elif chars[i] == 'S': chars[i] = '5'
+                elif chars[i] == 'B': chars[i] = '8'
 
-            # Letters at position 8 onwards
-            for i in range(8, length):
-                if chars[i] == '0':
-                    chars[i] = 'O'
-                elif chars[i] == '1':
-                    chars[i] = 'I'
-                elif chars[i] == '8':
-                    chars[i] = 'B'
-                elif chars[i] == '5':
-                    chars[i] = 'S'
-                elif chars[i] == '2':
-                    chars[i] = 'Z'
+            for i in range(bh_pos + 2, min(bh_pos + 6, length)):
+                if chars[i] in ['O', 'Q', 'D']: chars[i] = '0'
+                elif chars[i] in ['I', 'L']: chars[i] = '1'
+                elif chars[i] == 'Z': chars[i] = '2'
+                elif chars[i] == 'S': chars[i] = '5'
+                elif chars[i] == 'B': chars[i] = '8'
+                elif chars[i] == 'A': chars[i] = '4'
+
+            for i in range(bh_pos + 6, length):
+                if chars[i] == '0': chars[i] = 'O'
+                elif chars[i] == '1': chars[i] = 'I'
+                elif chars[i] == '8': chars[i] = 'B'
+                elif chars[i] == '5': chars[i] = 'S'
+                elif chars[i] == '2': chars[i] = 'Z'
 
             return "".join(chars)
 

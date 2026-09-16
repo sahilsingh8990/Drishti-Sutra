@@ -30,6 +30,7 @@ from backend.anpr_engine import anpr_engine
 from backend.identity_engine import identity_engine
 from backend.road_graph import road_graph
 from backend.predictive_handoff_engine import predictive_engine
+from backend.excel_exporter import export_database_to_excel, open_excel_file
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
@@ -38,6 +39,10 @@ async def lifespan(app: FastAPI):
     init_db()
     seed_database(force=False)
     camera_manager.simulation_running = False
+    try:
+        export_database_to_excel()
+    except Exception:
+        pass
     yield
     camera_manager.simulation_running = False
 
@@ -56,7 +61,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output"
+OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
+
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
 
 # ============================================================
 # PYDANTIC SCHEMAS
@@ -95,6 +104,45 @@ def get_model_status():
         "ocr_confidence": anpr_engine.ocr_conf,
         "indian_plates_only": anpr_engine.indian_plates_only,
         "live_camera_active": anpr_engine.live_camera_active
+    }
+
+@app.post("/api/anpr/inspect-image")
+async def inspect_image(file: UploadFile = File(...)):
+    import base64, numpy as np
+    contents = await file.read()
+
+    nparr = np.frombuffer(contents, np.uint8)
+    frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    if frame is None:
+        raise HTTPException(status_code=400, detail="Could not decode uploaded image file.")
+
+    annotated_frame, detections = anpr_engine.process_frame(frame, camera_id="CAM-01")
+
+    for d in detections:
+        try:
+            camera_manager.record_detection_sync(
+                plate_number=d["plate_number"],
+                camera_id="CAM-01",
+                detection_conf=d["detection_conf"],
+                ocr_conf=d["ocr_conf"],
+                vehicle_type="Uploaded Image ANPR",
+                speed_kmh=45.0,
+                snapshot_path="",
+                raw_text=d.get("raw_plate", d["plate_number"])
+            )
+        except Exception:
+            pass
+
+    ret, buffer = cv2.imencode(".jpg", annotated_frame)
+    b64_str = base64.b64encode(buffer).decode("utf-8") if ret else ""
+
+    return {
+        "success": True,
+        "filename": file.filename,
+        "total_plates_detected": len(detections),
+        "plates_detected": detections,
+        "annotated_image": f"data:image/jpeg;base64,{b64_str}"
     }
 
 @app.post("/api/anpr/inspect-video")
@@ -254,22 +302,41 @@ def generate_camera_stream(camera_id: str = "CAM-01"):
     if cfg.get("active", False):
         cap = cv2.VideoCapture(dev_idx)
         if cap.isOpened():
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            cap.set(cv2.CAP_PROP_FPS, 30)
+
+            frame_counter = 0
+            cached_detections = []
+            cached_annotated = None
+
             try:
                 while cfg.get("active", False):
                     success, frame = cap.read()
                     if not success:
                         break
 
-                    # Real-time YOLO ANPR & EasyOCR processing on physical webcam frame
-                    annotated_frame, detections = anpr_engine.process_frame(frame, camera_id=camera_id)
+                    frame_counter += 1
 
-                    # HUD overlay: Camera Node ID & Timestamp
+                    # Run fast ANPR processing every 3rd frame to maintain smooth 30 FPS live feed
+                    if frame_counter % 3 == 1 or cached_annotated is None:
+                        annotated_frame, cached_detections = anpr_engine.process_live_stream_frame(frame, camera_id=camera_id)
+                        cached_annotated = annotated_frame
+                    else:
+                        annotated_frame = frame.copy()
+                        for d in cached_detections:
+                            bx1, by1, bx2, by2 = d["bbox"]
+                            color = (0, 255, 128) if d.get("is_valid", True) else (0, 215, 255)
+                            cv2.rectangle(annotated_frame, (bx1, by1), (bx2, by2), color, 2)
+                            lbl = f"{d['plate_number']} ({int(d.get('ocr_conf', 0.9)*100)}%)"
+                            cv2.putText(annotated_frame, lbl, (bx1 + 4, max(14, by1 - 5)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+
                     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    cv2.rectangle(annotated_frame, (0, 0), (640, 28), (10, 14, 24), -1)
-                    cv2.putText(annotated_frame, f"LIVE WEBCAM [{camera_id}] (DEV {dev_idx}) - {cfg['name']}", (12, 19), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 128), 1)
-                    cv2.putText(annotated_frame, now_str, (470, 19), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+                    cv2.rectangle(annotated_frame, (0, 0), (640, 26), (10, 14, 24), -1)
+                    cv2.putText(annotated_frame, f"LIVE WEBCAM [{camera_id}] (DEV {dev_idx}) - {cfg['name']}", (10, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 128), 1)
+                    cv2.putText(annotated_frame, now_str, (470, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
 
-                    _, jpeg = cv2.imencode('.jpg', annotated_frame)
+                    _, jpeg = cv2.imencode('.jpg', annotated_frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
                     yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
             finally:
                 cap.release()
@@ -819,7 +886,37 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         camera_manager.disconnect_websocket(websocket)
 
+# ============================================================
+# EXCEL EXPORT & SYSTEM OPEN ENDPOINTS
+# ============================================================
+
+@app.get("/api/export/excel")
+def download_excel():
+    excel_path = export_database_to_excel()
+    return FileResponse(
+        path=str(excel_path),
+        filename="vehicle_data.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": "attachment; filename=vehicle_data.xlsx",
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
+    )
+
+@app.post("/api/export/excel/open")
+def open_excel_on_system():
+    try:
+        excel_path = open_excel_file()
+        return {
+            "status": "success",
+            "message": "Excel workbook opened successfully on host system.",
+            "path": str(excel_path)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to open Excel file: {str(e)}")
+
 @app.get("/", response_class=FileResponse)
 def serve_index():
     index_file = FRONTEND_DIR / "index.html"
     return FileResponse(str(index_file))
+

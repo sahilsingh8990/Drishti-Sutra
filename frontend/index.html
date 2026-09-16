@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -62,175 +62,213 @@
     <script src="/static/js/chart.min.js"></script>
     <script>if (typeof Chart === 'undefined') { document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>'); }</script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=2.0.9">
+    <link rel="stylesheet" href="/static/css/style.css?v=4.0.0">
 </head>
-<body class="bg-[#090d16] text-slate-100 min-h-screen flex flex-col antialiased">
+<body class="bg-[#031D33] text-[#F7F6F1] min-h-screen flex flex-col antialiased">
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-2 max-w-md w-full pointer-events-none"></div>
 
-    <!-- TOP OPERATIONAL HEADER -->
-    <header class="bg-[#0a0e18] border-b border-slate-800 px-6 py-4 min-h-[76px] flex items-center justify-between sticky top-0 z-40 shadow-md">
+    <!-- TOP OPERATIONAL HEADER (Brand Deep Navy & Forest Green Accents) -->
+    <header class="bg-[#041F36] border-b border-[#0E446D] px-6 py-3.5 min-h-[76px] flex items-center justify-between sticky top-0 z-40 shadow-md">
         <div class="flex items-center space-x-4">
             <a href="/" class="flex items-center space-x-3 group">
-                <img src="/static/logo_transparent.png" alt="Drishti Sutra Logo" class="h-12 md:h-14 w-auto object-contain filter drop-shadow-md group-hover:scale-105 transition-transform" />
+                <div class="brand-logo" style="background-color: #ffffff !important; padding: 4px 6px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;">
+                    <img src="/static/logo_transparent.png" alt="Drishti Sutra Logo" style="height: 44px; width: auto; object-fit: contain;" class="group-hover:scale-105 transition-transform" />
+                </div>
             </a>
             <div>
                 <div class="flex items-center space-x-2.5">
-                    <span class="font-extrabold text-base md:text-lg text-slate-100 tracking-wider font-mono">DRISHTI-SUTRA</span>
-                    <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-sky-950 border border-sky-800 text-sky-400 font-bold tracking-wide">ICCC CORE</span>
+                    <span class="font-extrabold text-base md:text-xl text-[#F7F6F1] tracking-wider font-mono">DRISHTI-SUTRA</span>
+                    <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#0D5A25] text-white font-bold tracking-wide border border-[#13752F]">ICCC CORE</span>
                 </div>
-                <p class="text-xs text-slate-400 font-medium mt-0.5">Integrated Traffic Command & Control Centre &bull; Multi-Camera ANPR Analytics</p>
+                <p class="text-xs text-[#A1B3C4] font-medium mt-0.5">Integrated Traffic Command & Control Centre &bull; Multi-Camera ANPR Analytics</p>
             </div>
         </div>
 
         <div class="flex items-center space-x-3">
-            <div class="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-[10px] bg-slate-900 border border-slate-800">
-                <i data-lucide="map" class="w-4 h-4 text-sky-400"></i>
-                <span class="text-xs text-slate-400 font-mono font-bold">NAGPUR MAP:</span>
-                <select id="free-map-theme-select" class="bg-slate-900 text-xs font-mono text-sky-300 border-none focus:outline-none cursor-pointer font-bold rounded-[6px]">
-                    <option value="carto-dark">FREE: CARTO Dark Matter (Command Center)</option>
-                    <option value="esri-dark">FREE: Esri World Dark Gray Canvas</option>
+            <div class="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-[10px] bg-[#062B4A] border border-[#0E446D]">
+                <i data-lucide="map" class="w-4 h-4 text-[#2E9147]"></i>
+                <span class="text-xs text-[#A1B3C4] font-mono font-bold">NAGPUR MAP:</span>
+                <select id="free-map-theme-select" class="bg-[#062B4A] text-xs font-mono text-[#F7F6F1] border border-[#0E446D] focus:outline-none cursor-pointer font-bold rounded-[6px] px-2 py-1">
+                    <option value="carto-dark">FREE: CARTO Dark Matter (Navy Brand)</option>
+                    <option value="carto-voyager">FREE: CARTO Day View (Light Brand)</option>
                     <option value="osm-standard">FREE: OpenStreetMap Standard</option>
-                    <option value="carto-voyager">FREE: CARTO Day View</option>
+                    <option value="esri-dark">FREE: Esri World Dark Gray Canvas</option>
                 </select>
             </div>
-            <div id="connection-status" class="flex items-center space-x-2 px-3 py-1.5 rounded-[10px] bg-slate-900 border border-slate-800">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-xs text-emerald-400 font-semibold uppercase tracking-wider font-mono">Grid Online</span>
+            <div id="connection-status" class="flex items-center space-x-2 px-3 py-1.5 rounded-[10px] bg-[#0D5A25]/30 border border-[#13752F]">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#2E9147] animate-pulse"></span>
+                <span class="text-xs text-[#2E9147] font-semibold uppercase tracking-wider font-mono">Surveillance Grid Online</span>
             </div>
-            <button id="btn-toggle-audio" class="p-2 rounded-[10px] bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 text-xs flex items-center space-x-1 transition-all" title="Toggle Alert Chime Sound">
-                <i data-lucide="volume-2" class="w-4 h-4 text-sky-400"></i>
+            <a href="/api/export/excel" download="vehicle_data.xlsx" class="px-3.5 py-1.5 rounded-[10px] bg-[#13752F] text-white hover:bg-[#0D5A25] text-xs flex items-center space-x-2 transition-all shadow-sm cursor-pointer no-underline border border-[#13752F]" title="Download Excel Database (vehicle_data.xlsx)">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-white"></i>
+                <span class="text-xs font-mono font-bold tracking-wide">EXCEL DATA</span>
+                <i data-lucide="download" class="w-3.5 h-3.5 text-white ml-0.5"></i>
+            </a>
+
+            <button id="btn-toggle-audio" class="p-2 rounded-[10px] bg-[#062B4A] border border-[#0E446D] text-[#F7F6F1] hover:bg-[#0A3655] text-xs flex items-center space-x-1 transition-all" title="Toggle Alert Chime Sound">
+                <i data-lucide="volume-2" class="w-4 h-4 text-[#2E9147]"></i>
             </button>
-            <button id="btn-toggle-theme" type="button" onclick="window.toggleDashboardTheme();" style="position: relative; z-index: 9999; cursor: pointer; pointer-events: auto !important;" class="px-3.5 py-1.5 rounded-[10px] bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 text-xs flex items-center space-x-2 transition-all focus:outline-none focus:ring-2 focus:ring-sky-500" title="Switch to light mode" aria-label="Switch to light mode">
-                <i data-lucide="sun" id="theme-icon-sun" class="w-4 h-4 text-amber-400 hidden"></i>
-                <i data-lucide="moon" id="theme-icon-moon" class="w-4 h-4 text-sky-400"></i>
-                <span id="theme-text" class="text-xs font-mono font-bold">DARK</span>
+            <button id="btn-toggle-theme" type="button" onclick="window.toggleDashboardTheme();" style="position: relative; z-index: 9999; cursor: pointer; pointer-events: auto !important;" class="px-3.5 py-1.5 rounded-[10px] bg-[#062B4A] border border-[#0E446D] text-[#F7F6F1] hover:bg-[#0A3655] text-xs flex items-center space-x-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#13752F]" title="Switch to light mode" aria-label="Switch to light mode">
+                <i data-lucide="sun" id="theme-icon-sun" class="w-4 h-4 text-[#F6A126] hidden"></i>
+                <i data-lucide="moon" id="theme-icon-moon" class="w-4 h-4 text-[#2E9147]"></i>
+                <span id="theme-text" class="text-xs font-mono font-bold text-[#F7F6F1]">DARK</span>
             </button>
-            <div id="system-clock" class="font-mono text-xs text-slate-400 bg-slate-950 px-3 py-1.5 rounded-[10px] border border-slate-800 hidden sm:block">
+            <div id="system-clock" class="font-mono text-xs text-[#A1B3C4] bg-[#062B4A] px-3 py-1.5 rounded-[10px] border border-[#0E446D] hidden sm:block font-semibold">
                 00:00:00 UTC+5:30
             </div>
         </div>
     </header>
 
     <div class="flex flex-1 min-h-[calc(100vh-76px)]">
-        <!-- LEFT OPERATIONAL SIDEBAR -->
-        <aside class="w-60 bg-[#0b0f1a] border-r border-slate-800 p-3 flex flex-col justify-between flex-shrink-0">
+        <!-- LEFT OPERATIONAL SIDEBAR (Navy Background with Green Selected Accent) -->
+        <aside class="w-60 bg-[#041F36] border-r border-[#0E446D] p-3 flex flex-col justify-between flex-shrink-0 shadow-md">
             <div class="space-y-1">
-                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1.5">Operational Modules</div>
+                <div class="text-[10px] font-bold text-[#A1B3C4] uppercase tracking-wider px-2 py-1.5">Operational Modules</div>
                 
-                <button class="tab-btn w-full px-3 py-2 rounded text-xs font-semibold flex items-center space-x-2.5 transition-all text-slate-300 hover:bg-slate-800/80 hover:text-white" data-tab="live">
-                    <i data-lucide="video" class="w-4 h-4 text-sky-400"></i>
+                <button class="tab-btn active-tab w-full px-3 py-2.5 rounded-md text-xs font-semibold flex items-center space-x-2.5 transition-all text-[#F7F6F1] hover:bg-[#13752F]/15" data-tab="live">
+                    <i data-lucide="video" class="w-4 h-4 text-[#2E9147]"></i>
                     <span>Live Surveillance</span>
                 </button>
 
-                <button class="tab-btn w-full px-3 py-2 rounded text-xs font-semibold flex items-center space-x-2.5 transition-all text-slate-300 hover:bg-slate-800/80 hover:text-white" data-tab="predictive">
-                    <i data-lucide="crosshair" class="w-4 h-4 text-purple-400"></i>
+                <button class="tab-btn w-full px-3 py-2.5 rounded-md text-xs font-semibold flex items-center space-x-2.5 transition-all text-[#A1B3C4] hover:bg-[#13752F]/15 hover:text-[#F7F6F1]" data-tab="predictive">
+                    <i data-lucide="crosshair" class="w-4 h-4 text-[#F6A126]"></i>
                     <span>Predictive Handoff</span>
                 </button>
 
-                <button class="tab-btn w-full px-3 py-2 rounded text-xs font-semibold flex items-center space-x-2.5 transition-all text-slate-300 hover:bg-slate-800/80 hover:text-white" data-tab="trajectory">
-                    <i data-lucide="git-branch" class="w-4 h-4 text-emerald-400"></i>
+                <button class="tab-btn w-full px-3 py-2.5 rounded-md text-xs font-semibold flex items-center space-x-2.5 transition-all text-[#A1B3C4] hover:bg-[#13752F]/15 hover:text-[#F7F6F1]" data-tab="trajectory">
+                    <i data-lucide="git-branch" class="w-4 h-4 text-[#2E9147]"></i>
                     <span>Vehicle Trajectory</span>
                 </button>
 
-                <button class="tab-btn w-full px-3 py-2 rounded text-xs font-semibold flex items-center space-x-2.5 transition-all text-slate-300 hover:bg-slate-800/80 hover:text-white" data-tab="analytics">
-                    <i data-lucide="activity" class="w-4 h-4 text-amber-400"></i>
+                <button class="tab-btn w-full px-3 py-2.5 rounded-md text-xs font-semibold flex items-center space-x-2.5 transition-all text-[#A1B3C4] hover:bg-[#13752F]/15 hover:text-[#F7F6F1]" data-tab="analytics">
+                    <i data-lucide="activity" class="w-4 h-4 text-[#F6A126]"></i>
                     <span>Traffic Analytics</span>
                 </button>
 
-                <button class="tab-btn w-full px-3 py-2 rounded text-xs font-semibold flex items-center space-x-2.5 transition-all text-slate-300 hover:bg-slate-800/80 hover:text-white" data-tab="security">
-                    <i data-lucide="shield-alert" class="w-4 h-4 text-red-400"></i>
+                <button class="tab-btn w-full px-3 py-2.5 rounded-md text-xs font-semibold flex items-center space-x-2.5 transition-all text-[#A1B3C4] hover:bg-[#13752F]/15 hover:text-[#F7F6F1]" data-tab="security">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-[#D83A3A]"></i>
                     <span>Security & Watchlist</span>
                 </button>
 
-                <button class="tab-btn w-full px-3 py-2 rounded text-xs font-semibold flex items-center space-x-2.5 transition-all text-slate-300 hover:bg-slate-800/80 hover:text-white" data-tab="infrastructure">
-                    <i data-lucide="cpu" class="w-4 h-4 text-slate-400"></i>
+                <button class="tab-btn w-full px-3 py-2.5 rounded-md text-xs font-semibold flex items-center space-x-2.5 transition-all text-[#A1B3C4] hover:bg-[#13752F]/15 hover:text-[#F7F6F1]" data-tab="infrastructure">
+                    <i data-lucide="cpu" class="w-4 h-4 text-[#A1B3C4]"></i>
                     <span>Camera Network</span>
                 </button>
+
+                <div class="pt-2 border-t border-[#0E446D] mt-2 space-y-1.5">
+                    <div class="text-[10px] font-bold text-[#2E9147] uppercase tracking-wider px-2 py-1 flex items-center justify-between">
+                        <span>Data Storage</span>
+                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#0D5A25] text-white border border-[#13752F] font-bold">XLSX</span>
+                    </div>
+                    <a href="/api/export/excel" download="vehicle_data.xlsx" class="w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-all text-[#2E9147] bg-[#0D5A25]/30 border border-[#13752F] hover:bg-[#13752F] hover:text-white cursor-pointer no-underline" title="Download Excel Database Workbook">
+                        <div class="flex items-center space-x-2.5">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-[#2E9147]"></i>
+                            <span>Export Excel File</span>
+                        </div>
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-[#2E9147]"></i>
+                    </a>
+                    <button type="button" onclick="window.app.openExcelOnSystem()" class="w-full px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center space-x-2 transition-all text-[#F7F6F1] bg-[#062B4A] border border-[#0E446D] hover:bg-[#0A3655] cursor-pointer" title="Open Excel Workbook natively on desktop">
+                        <i data-lucide="external-link" class="w-3.5 h-3.5 text-[#2E9147]"></i>
+                        <span>Open on Desktop PC</span>
+                    </button>
+                </div>
             </div>
 
-            <div class="op-panel p-3 border border-slate-800 text-xs space-y-2">
+            <div class="op-panel p-3 border border-[#0E446D] bg-[#062B4A] text-xs space-y-2">
                 <div class="flex items-center justify-between">
-                    <span class="font-bold text-slate-400 uppercase text-[10px]">ANPR Engine Status</span>
+                    <span class="font-bold text-[#A1B3C4] uppercase text-[10px]">ANPR Engine Status</span>
                     <span class="op-badge op-badge-online">YOLOv11</span>
                 </div>
-                <div id="model-status-info" class="text-[11px] text-slate-400 leading-relaxed">
+                <div id="model-status-info" class="text-[11px] text-[#A1B3C4] leading-relaxed">
                     <!-- Populated dynamically -->
                 </div>
             </div>
         </aside>
 
-        <!-- MAIN CONTENT WORKSPACE -->
-        <main class="flex-1 p-5 overflow-y-auto space-y-5 bg-[#090d16]">
+        <!-- MAIN CONTENT WORKSPACE (Deep Navy #031D33 Canvas) -->
+        <main class="flex-1 p-5 overflow-y-auto space-y-5 bg-[#031D33]">
             <!-- Top Operational Metrics Strip -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div class="op-stat-box flex items-center justify-between">
+                <div class="op-stat-box bg-[#062B4A] border border-[#0E446D] flex items-center justify-between shadow-sm">
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Vehicles Logged</span>
+                        <span class="text-[10px] font-bold text-[#A1B3C4] uppercase tracking-wider">Vehicles Logged</span>
                         <div class="mt-1 flex items-baseline space-x-2">
-                            <span id="kpi-total-detections" class="text-xl font-bold font-mono text-slate-100">0</span>
-                            <span class="text-[10px] text-emerald-400 font-mono">+12% vs avg</span>
+                            <span id="kpi-total-detections" class="text-xl font-bold font-mono text-[#F7F6F1]">0</span>
+                            <span class="text-[10px] text-[#2E9147] font-mono font-bold">+12% vs avg</span>
                         </div>
                     </div>
-                    <div class="p-2 rounded bg-sky-950 border border-sky-800/60 text-sky-400"><i data-lucide="car" class="w-4 h-4"></i></div>
+                    <div class="p-2.5 rounded bg-[#0A3655] border border-[#0E446D] text-[#2E9147]"><i data-lucide="car" class="w-4 h-4"></i></div>
                 </div>
 
-                <div class="op-stat-box flex items-center justify-between">
+                <div class="op-stat-box bg-[#062B4A] border border-[#0E446D] flex items-center justify-between shadow-sm">
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active ANPR Nodes</span>
+                        <span class="text-[10px] font-bold text-[#A1B3C4] uppercase tracking-wider">Active ANPR Nodes</span>
                         <div class="mt-1 flex items-baseline space-x-2">
-                            <span id="kpi-active-cameras" class="text-xl font-bold font-mono text-slate-100">12 / 12</span>
-                            <span class="text-[10px] text-emerald-400 font-mono">100% Online</span>
+                            <span id="kpi-active-cameras" class="text-xl font-bold font-mono text-[#F7F6F1]">12 / 12</span>
+                            <span class="text-[10px] text-[#2E9147] font-mono font-bold">100% Online</span>
                         </div>
                     </div>
-                    <div class="p-2 rounded bg-emerald-950 border border-emerald-800/60 text-emerald-400"><i data-lucide="camera" class="w-4 h-4"></i></div>
+                    <div class="p-2.5 rounded bg-[#0D5A25]/30 border border-[#13752F] text-[#2E9147]"><i data-lucide="camera" class="w-4 h-4"></i></div>
                 </div>
 
-                <div class="op-stat-box flex items-center justify-between">
+                <div class="op-stat-box bg-[#062B4A] border border-[#0E446D] flex items-center justify-between shadow-sm">
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Watchlist Alerts</span>
+                        <span class="text-[10px] font-bold text-[#A1B3C4] uppercase tracking-wider">Active Watchlist Alerts</span>
                         <div class="mt-1 flex items-baseline space-x-2">
-                            <span id="kpi-active-alerts" class="text-xl font-bold font-mono text-red-400">0</span>
-                            <span class="text-[10px] text-red-400 font-mono">Attention Req</span>
+                            <span id="kpi-active-alerts" class="text-xl font-bold font-mono text-[#D83A3A]">0</span>
+                            <span class="text-[10px] text-[#D83A3A] font-mono font-bold">Attention Req</span>
                         </div>
                     </div>
-                    <div class="p-2 rounded bg-red-950 border border-red-800/60 text-red-400"><i data-lucide="shield-alert" class="w-4 h-4"></i></div>
+                    <div class="p-2.5 rounded bg-red-950/40 border border-red-800 text-[#D83A3A]"><i data-lucide="shield-alert" class="w-4 h-4"></i></div>
                 </div>
 
-                <div class="op-stat-box flex items-center justify-between">
+                <div class="op-stat-box bg-[#062B4A] border border-[#0E446D] flex items-center justify-between shadow-sm">
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Grid Congestion Index</span>
+                        <span class="text-[10px] font-bold text-[#A1B3C4] uppercase tracking-wider">Grid Congestion Index</span>
                         <div class="mt-1 flex items-baseline space-x-2">
-                            <span id="kpi-congestion-index" class="text-xl font-bold font-mono text-amber-400">58%</span>
-                            <span class="text-[10px] text-amber-400 font-mono">Moderate Flow</span>
+                            <span id="kpi-congestion-index" class="text-xl font-bold font-mono text-[#F6A126]">58%</span>
+                            <span class="text-[10px] text-[#F6A126] font-mono font-bold">Moderate Flow</span>
                         </div>
                     </div>
-                    <div class="p-2 rounded bg-amber-950 border border-amber-800/60 text-amber-400"><i data-lucide="gauge" class="w-4 h-4"></i></div>
+                    <div class="p-2.5 rounded bg-amber-950/40 border border-[#D98212] text-[#F6A126]"><i data-lucide="gauge" class="w-4 h-4"></i></div>
                 </div>
             </div>
 
             <!-- TAB 1: LIVE SURVEILLANCE -->
             <section id="tab-live" class="tab-content space-y-5">
                 <!-- AI ANPR CONTROL & IMAGE INSPECTOR PANEL -->
-                <div class="op-panel">
-                    <div class="op-panel-header">
+                <div class="op-panel bg-[#062B4A] border border-[#0E446D] shadow-sm">
+                    <!-- GRID SWITCHER & CONTROL BAR -->
+                    <div class="p-3 flex flex-wrap items-center justify-between gap-3 bg-[#0A3655] border-b border-[#0E446D]">
                         <div class="flex items-center space-x-2">
-                            <i data-lucide="cpu" class="w-4 h-4 text-sky-400"></i>
-                            <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">ANPR Detection & Upload Inspector</h3>
+                            <span class="text-xs font-bold text-[#A1B3C4] uppercase tracking-wider">Grid Layout:</span>
+                            <div class="flex items-center space-x-1 bg-[#062B4A] p-1 rounded border border-[#0E446D]">
+                                <button id="btn-grid-2x2" onclick="app.setCameraGrid('2x2')" class="px-2.5 py-1 rounded text-xs font-mono font-bold transition-all text-white bg-[#13752F] border border-[#13752F]">
+                                    2 &times; 2
+                                </button>
+                                <button id="btn-grid-3x3" onclick="app.setCameraGrid('3x3')" class="px-2.5 py-1 rounded text-xs font-mono font-bold transition-all text-[#A1B3C4] hover:text-white">
+                                    3 &times; 3
+                                </button>
+                                <button id="btn-grid-4x4" onclick="app.setCameraGrid('4x4')" class="px-2.5 py-1 rounded text-xs font-mono font-bold transition-all text-[#A1B3C4] hover:text-white">
+                                    4 &times; 4
+                                </button>
+                            </div>
                         </div>
+
                         <div class="flex items-center space-x-2">
-                            <button id="btn-toggle-webcam" class="op-btn op-btn-primary">
+                            <button id="btn-toggle-webcam" class="op-btn op-btn-primary bg-[#13752F] text-white border-[#13752F]">
                                 <i data-lucide="video" class="w-3.5 h-3.5"></i>
                                 <span>Start Live Webcam ANPR</span>
                             </button>
 
-                            <label class="op-btn">
-                                <i data-lucide="image" class="w-3.5 h-3.5 text-sky-400"></i>
+                            <label class="op-btn bg-[#062B4A] border-[#0E446D] text-[#F7F6F1] cursor-pointer hover:bg-[#0A3655]">
+                                <i data-lucide="image" class="w-3.5 h-3.5 text-[#2E9147]"></i>
                                 <span>Upload Image ANPR</span>
                                 <input id="anpr-file-upload" type="file" accept="image/*" class="hidden">
                             </label>
 
-                            <label class="op-btn">
-                                <i data-lucide="file-video" class="w-3.5 h-3.5 text-purple-400"></i>
+                            <label class="op-btn bg-[#062B4A] border-[#0E446D] text-[#F7F6F1] cursor-pointer hover:bg-[#0A3655]">
+                                <i data-lucide="file-video" class="w-3.5 h-3.5 text-[#F6A126]"></i>
                                 <span>Upload Video ANPR</span>
                                 <input id="anpr-video-upload" type="file" accept="video/mp4,video/avi,video/mov,video/mkv" class="hidden">
                             </label>
@@ -238,33 +276,36 @@
                     </div>
 
                     <!-- Dynamic Inspection Result Container -->
-                    <div id="inspector-results" class="hidden p-3 border-t border-slate-800 bg-[#0a0e18] space-y-3">
+                    <div id="inspector-results" class="hidden p-3 border-b border-[#0E446D] bg-[#062B4A] space-y-3">
                         <div class="flex items-center justify-between">
-                            <h4 class="font-bold text-xs text-sky-400 uppercase tracking-wider">Inspection Analysis Output</h4>
-                            <button class="text-xs text-slate-400 hover:text-white" onclick="document.getElementById('inspector-results').classList.add('hidden')">
+                            <h4 class="font-bold text-xs text-[#2E9147] uppercase tracking-wider flex items-center space-x-2">
+                                <i data-lucide="sparkles" class="w-4 h-4 text-[#F6A126]"></i>
+                                <span>ANPR Inspection Analysis Output</span>
+                            </h4>
+                            <button class="text-xs text-[#A1B3C4] hover:text-white" onclick="document.getElementById('inspector-results').classList.add('hidden')">
                                 Close Preview &times;
                             </button>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
                             <div>
-                                <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">Annotated Frame with Bounding Box:</div>
-                                <img id="inspector-annotated-img" class="w-full rounded border border-slate-800 max-h-64 object-contain bg-black">
+                                <div class="text-[10px] font-bold text-[#A1B3C4] uppercase mb-1">Annotated Frame & Bounding Box:</div>
+                                <img id="inspector-annotated-img" class="w-full rounded border border-[#0E446D] max-h-64 object-contain bg-[#02111E]">
                             </div>
                             <div class="space-y-2">
-                                <div class="text-[10px] font-bold text-slate-400 uppercase">OCR Target Match & Candidates:</div>
+                                <div class="text-[10px] font-bold text-[#A1B3C4] uppercase">OCR Target Match & Candidates:</div>
                                 <div id="inspector-detected-plates" class="space-y-2"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ALERT BANNER -->
-                <div id="urgent-alert-banner" class="hidden p-3 rounded bg-red-950/80 border border-red-500/60 flex items-center justify-between">
+                <!-- URGENT WATCHLIST ALERT BANNER -->
+                <div id="urgent-alert-banner" class="hidden p-3 rounded-lg bg-red-950/70 border border-red-700 flex items-center justify-between shadow-sm">
                     <div class="flex items-center space-x-2.5">
-                        <i data-lucide="bell-ring" class="w-4 h-4 text-red-400 animate-pulse"></i>
+                        <i data-lucide="bell-ring" class="w-4 h-4 text-[#D83A3A] animate-pulse"></i>
                         <div>
                             <h4 class="font-bold text-xs text-red-200 uppercase tracking-wider">Immediate Security Match Sighted</h4>
-                            <p id="urgent-alert-text" class="text-xs text-red-300">Stolen vehicle detected at Connaught Place North.</p>
+                            <p id="urgent-alert-text" class="text-xs text-red-300">Stolen vehicle detected at Sitabuldi Square.</p>
                         </div>
                     </div>
                     <button class="op-btn op-btn-danger" onclick="app.switchTab('security')">
@@ -276,160 +317,113 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     <div class="lg:col-span-2 space-y-3">
                         <div class="flex items-center justify-between">
-                            <h3 class="font-bold text-xs text-slate-300 uppercase tracking-wider flex items-center space-x-2">
-                                <i data-lucide="layout-grid" class="w-4 h-4 text-sky-400"></i>
-                                <span>Multi-Camera Physical Webcam Connection Grid (4 Core Nagpur Nodes)</span>
+                            <h3 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider flex items-center space-x-2">
+                                <i data-lucide="layout-grid" class="w-4 h-4 text-[#2E9147]"></i>
+                                <span>Multi-Camera Physical Surveillance Grid (Nagpur Network)</span>
                             </h3>
-                            <span class="text-[10px] font-mono text-slate-400">Real OpenCV Webcam Stream &bull; ANPR Active</span>
+                            <span class="text-[10px] font-mono text-[#A1B3C4] font-bold">12 Nodes Online &bull; ANPR Stream Active</span>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- DYNAMIC CAMERA GRID CONTAINER -->
+                        <div id="camera-grid-container" class="camera-grid-2x2">
                             <!-- CAM-01 Card -->
-                            <div id="live-card-CAM-01" class="op-panel relative flex flex-col overflow-hidden">
-                                <div class="p-2 bg-[#0a0e18] border-b border-slate-800 flex items-center justify-between text-xs">
+                            <div id="live-card-CAM-01" class="cctv-tile bg-[#062B4A] border border-[#0E446D] shadow-sm">
+                                <div class="cctv-tile-header bg-[#0A3655] border-b border-[#0E446D]">
                                     <div class="flex items-center space-x-2">
-                                        <span id="dot-CAM-01" class="status-dot offline"></span>
-                                        <span class="font-bold text-slate-200">CAM-01 [SITABULDI]</span>
-                                        <span id="badge-CAM-01" class="op-badge opacity-70">OFFLINE</span>
+                                        <span id="dot-CAM-01" class="status-dot online"></span>
+                                        <span class="font-bold text-[#F7F6F1]">CAM-01 [SITABULDI]</span>
+                                        <span id="badge-CAM-01" class="op-badge op-badge-online">LIVE</span>
                                     </div>
-                                    <span class="font-mono text-[10px] text-slate-400">Node #01</span>
+                                    <span class="font-mono text-[10px] text-[#A1B3C4] font-semibold">Node #01</span>
                                 </div>
-                                <div class="relative aspect-video bg-black overflow-hidden flex items-center justify-center">
+                                <div class="cctv-feed-box bg-[#02111E]">
                                     <img id="feed-img-CAM-01" src="/api/video-feed/CAM-01" class="w-full h-full object-cover">
                                 </div>
-                                <div class="p-2 bg-[#0d121f] border-t border-slate-800 flex items-center justify-between gap-2 text-xs">
-                                    <div class="flex items-center space-x-1.5 flex-1">
-                                        <i data-lucide="camera" class="w-3.5 h-3.5 text-sky-400"></i>
-                                        <select id="webcam-device-CAM-01" class="bg-slate-900 text-slate-200 border border-slate-700 rounded px-2 py-1 text-[11px] font-mono focus:border-sky-500 w-full">
-                                            <option value="0">Webcam 0 (Integrated / USB)</option>
-                                            <option value="1">Webcam 1 (Secondary USB)</option>
-                                            <option value="2">Webcam 2 (External Cam)</option>
-                                            <option value="3">Webcam 3 (Stream Input)</option>
-                                        </select>
+                                <div class="cctv-tile-footer bg-[#0A3655] border-t border-[#0E446D]">
+                                    <div class="flex items-center space-x-2 text-[#F7F6F1]">
+                                        <span>Last Plate: <strong class="text-[#2E9147]">MH31AB1234</strong></span>
+                                        <span class="text-[#2E9147] font-bold">94%</span>
                                     </div>
-                                    <button id="btn-webcam-CAM-01" onclick="app.toggleCameraWebcam('CAM-01')" class="px-2 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white font-bold text-[11px] flex items-center space-x-1">
-                                        <i data-lucide="power" class="w-3 h-3"></i>
-                                        <span id="btn-text-CAM-01">Connect Webcam</span>
-                                    </button>
-                                </div>
-                                <div class="px-2.5 py-1.5 bg-[#0a0e18] border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-                                    <span class="text-slate-400 truncate">Sitabuldi Central Interchange</span>
-                                    <span class="text-emerald-400 font-mono font-bold">48.5 km/h</span>
+                                    <span class="text-[#A1B3C4]">Vehicles: 34</span>
                                 </div>
                             </div>
 
                             <!-- CAM-02 Card -->
-                            <div id="live-card-CAM-02" class="op-panel relative flex flex-col overflow-hidden">
-                                <div class="p-2 bg-[#0a0e18] border-b border-slate-800 flex items-center justify-between text-xs">
+                            <div id="live-card-CAM-02" class="cctv-tile bg-[#062B4A] border border-[#0E446D] shadow-sm">
+                                <div class="cctv-tile-header bg-[#0A3655] border-b border-[#0E446D]">
                                     <div class="flex items-center space-x-2">
-                                        <span id="dot-CAM-02" class="status-dot offline"></span>
-                                        <span class="font-bold text-slate-200">CAM-02 [ZERO MILE]</span>
-                                        <span id="badge-CAM-02" class="op-badge opacity-70">OFFLINE</span>
+                                        <span id="dot-CAM-02" class="status-dot online"></span>
+                                        <span class="font-bold text-[#F7F6F1]">CAM-02 [ZERO MILE]</span>
+                                        <span id="badge-CAM-02" class="op-badge op-badge-online">LIVE</span>
                                     </div>
-                                    <span class="font-mono text-[10px] text-slate-400">Node #02</span>
+                                    <span class="font-mono text-[10px] text-[#A1B3C4] font-semibold">Node #02</span>
                                 </div>
-                                <div class="relative aspect-video bg-black overflow-hidden flex items-center justify-center">
+                                <div class="cctv-feed-box bg-[#02111E]">
                                     <img id="feed-img-CAM-02" src="/api/video-feed/CAM-02" class="w-full h-full object-cover">
                                 </div>
-                                <div class="p-2 bg-[#0d121f] border-t border-slate-800 flex items-center justify-between gap-2 text-xs">
-                                    <div class="flex items-center space-x-1.5 flex-1">
-                                        <i data-lucide="camera" class="w-3.5 h-3.5 text-sky-400"></i>
-                                        <select id="webcam-device-CAM-02" class="bg-slate-900 text-slate-200 border border-slate-700 rounded px-2 py-1 text-[11px] font-mono focus:border-sky-500 w-full">
-                                            <option value="1">Webcam 1 (Secondary USB)</option>
-                                            <option value="0">Webcam 0 (Integrated / USB)</option>
-                                            <option value="2">Webcam 2 (External Cam)</option>
-                                            <option value="3">Webcam 3 (Stream Input)</option>
-                                        </select>
+                                <div class="cctv-tile-footer bg-[#0A3655] border-t border-[#0E446D]">
+                                    <div class="flex items-center space-x-2 text-[#F7F6F1]">
+                                        <span>Last Plate: <strong class="text-[#2E9147]">MH12DE5678</strong></span>
+                                        <span class="text-[#2E9147] font-bold">92%</span>
                                     </div>
-                                    <button id="btn-webcam-CAM-02" onclick="app.toggleCameraWebcam('CAM-02')" class="px-2 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white font-bold text-[11px] flex items-center space-x-1">
-                                        <i data-lucide="power" class="w-3 h-3"></i>
-                                        <span id="btn-text-CAM-02">Connect Webcam</span>
-                                    </button>
-                                </div>
-                                <div class="px-2.5 py-1.5 bg-[#0a0e18] border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-                                    <span class="text-slate-400 truncate">Zero Mile Freedom Park</span>
-                                    <span class="text-emerald-400 font-mono font-bold">54.2 km/h</span>
+                                    <span class="text-[#A1B3C4]">Vehicles: 28</span>
                                 </div>
                             </div>
 
                             <!-- CAM-03 Card -->
-                            <div id="live-card-CAM-03" class="op-panel relative flex flex-col overflow-hidden">
-                                <div class="p-2 bg-[#0a0e18] border-b border-slate-800 flex items-center justify-between text-xs">
+                            <div id="live-card-CAM-03" class="cctv-tile bg-[#062B4A] border border-[#0E446D] shadow-sm">
+                                <div class="cctv-tile-header bg-[#0A3655] border-b border-[#0E446D]">
                                     <div class="flex items-center space-x-2">
-                                        <span id="dot-CAM-03" class="status-dot offline"></span>
-                                        <span class="font-bold text-slate-200">CAM-03 [RAILWAY STATION]</span>
-                                        <span id="badge-CAM-03" class="op-badge opacity-70">OFFLINE</span>
+                                        <span id="dot-CAM-03" class="status-dot online"></span>
+                                        <span class="font-bold text-[#F7F6F1]">CAM-03 [RAILWAY STATION]</span>
+                                        <span id="badge-CAM-03" class="op-badge op-badge-online">LIVE</span>
                                     </div>
-                                    <span class="font-mono text-[10px] text-slate-400">Node #03</span>
+                                    <span class="font-mono text-[10px] text-[#A1B3C4] font-semibold">Node #03</span>
                                 </div>
-                                <div class="relative aspect-video bg-black overflow-hidden flex items-center justify-center">
+                                <div class="cctv-feed-box bg-[#02111E]">
                                     <img id="feed-img-CAM-03" src="/api/video-feed/CAM-03" class="w-full h-full object-cover">
                                 </div>
-                                <div class="p-2 bg-[#0d121f] border-t border-slate-800 flex items-center justify-between gap-2 text-xs">
-                                    <div class="flex items-center space-x-1.5 flex-1">
-                                        <i data-lucide="camera" class="w-3.5 h-3.5 text-sky-400"></i>
-                                        <select id="webcam-device-CAM-03" class="bg-slate-900 text-slate-200 border border-slate-700 rounded px-2 py-1 text-[11px] font-mono focus:border-sky-500 w-full">
-                                            <option value="2">Webcam 2 (External Cam)</option>
-                                            <option value="0">Webcam 0 (Integrated / USB)</option>
-                                            <option value="1">Webcam 1 (Secondary USB)</option>
-                                            <option value="3">Webcam 3 (Stream Input)</option>
-                                        </select>
+                                <div class="cctv-tile-footer bg-[#0A3655] border-t border-[#0E446D]">
+                                    <div class="flex items-center space-x-2 text-[#F7F6F1]">
+                                        <span>Last Plate: <strong class="text-[#2E9147]">MH31DQ4321</strong></span>
+                                        <span class="text-[#2E9147] font-bold">96%</span>
                                     </div>
-                                    <button id="btn-webcam-CAM-03" onclick="app.toggleCameraWebcam('CAM-03')" class="px-2 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white font-bold text-[11px] flex items-center space-x-1">
-                                        <i data-lucide="power" class="w-3 h-3"></i>
-                                        <span id="btn-text-CAM-03">Connect Webcam</span>
-                                    </button>
-                                </div>
-                                <div class="px-2.5 py-1.5 bg-[#0a0e18] border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-                                    <span class="text-slate-400 truncate">Nagpur Railway Station</span>
-                                    <span class="text-emerald-400 font-mono font-bold">42.0 km/h</span>
+                                    <span class="text-[#A1B3C4]">Vehicles: 41</span>
                                 </div>
                             </div>
 
                             <!-- CAM-04 Card -->
-                            <div id="live-card-CAM-04" class="op-panel relative flex flex-col overflow-hidden">
-                                <div class="p-2 bg-[#0a0e18] border-b border-slate-800 flex items-center justify-between text-xs">
+                            <div id="live-card-CAM-04" class="cctv-tile bg-[#062B4A] border border-[#0E446D] shadow-sm">
+                                <div class="cctv-tile-header bg-[#0A3655] border-b border-[#0E446D]">
                                     <div class="flex items-center space-x-2">
-                                        <span id="dot-CAM-04" class="status-dot offline"></span>
-                                        <span class="font-bold text-slate-200">CAM-04 [WARDHA ROAD]</span>
-                                        <span id="badge-CAM-04" class="op-badge opacity-70">OFFLINE</span>
+                                        <span id="dot-CAM-04" class="status-dot online"></span>
+                                        <span class="font-bold text-[#F7F6F1]">CAM-04 [WARDHA ROAD]</span>
+                                        <span id="badge-CAM-04" class="op-badge op-badge-online">LIVE</span>
                                     </div>
-                                    <span class="font-mono text-[10px] text-slate-400">Node #04</span>
+                                    <span class="font-mono text-[10px] text-[#A1B3C4] font-semibold">Node #04</span>
                                 </div>
-                                <div class="relative aspect-video bg-black overflow-hidden flex items-center justify-center">
+                                <div class="cctv-feed-box bg-[#02111E]">
                                     <img id="feed-img-CAM-04" src="/api/video-feed/CAM-04" class="w-full h-full object-cover">
                                 </div>
-                                <div class="p-2 bg-[#0d121f] border-t border-slate-800 flex items-center justify-between gap-2 text-xs">
-                                    <div class="flex items-center space-x-1.5 flex-1">
-                                        <i data-lucide="camera" class="w-3.5 h-3.5 text-sky-400"></i>
-                                        <select id="webcam-device-CAM-04" class="bg-slate-900 text-slate-200 border border-slate-700 rounded px-2 py-1 text-[11px] font-mono focus:border-sky-500 w-full">
-                                            <option value="3">Webcam 3 (Stream Input)</option>
-                                            <option value="0">Webcam 0 (Integrated / USB)</option>
-                                            <option value="1">Webcam 1 (Secondary USB)</option>
-                                            <option value="2">Webcam 2 (External Cam)</option>
-                                        </select>
+                                <div class="cctv-tile-footer bg-[#0A3655] border-t border-[#0E446D]">
+                                    <div class="flex items-center space-x-2 text-[#F7F6F1]">
+                                        <span>Last Plate: <strong class="text-[#2E9147]">MH49AE2355</strong></span>
+                                        <span class="text-[#2E9147] font-bold">95%</span>
                                     </div>
-                                    <button id="btn-webcam-CAM-04" onclick="app.toggleCameraWebcam('CAM-04')" class="px-2 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white font-bold text-[11px] flex items-center space-x-1">
-                                        <i data-lucide="power" class="w-3 h-3"></i>
-                                        <span id="btn-text-CAM-04">Connect Webcam</span>
-                                    </button>
-                                </div>
-                                <div class="px-2.5 py-1.5 bg-[#0a0e18] border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-                                    <span class="text-slate-400 truncate">Wardha Road Airport Flyover</span>
-                                    <span class="text-emerald-400 font-mono font-bold">68.4 km/h</span>
+                                    <span class="text-[#A1B3C4]">Vehicles: 52</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- LIVE STREAM TICKER PANEL -->
-                    <div class="op-panel flex flex-col h-[480px]">
-                        <div class="op-panel-header">
-                            <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider flex items-center space-x-2">
-                                <i data-lucide="list" class="w-4 h-4 text-sky-400"></i>
-                                <span>Real-Time Detection Stream</span>
+                    <div class="op-panel bg-[#062B4A] border border-[#0E446D] shadow-sm flex flex-col h-[520px]">
+                        <div class="op-panel-header bg-[#0A3655] border-b border-[#0E446D]">
+                            <h3 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider flex items-center space-x-2">
+                                <i data-lucide="list" class="w-4 h-4 text-[#2E9147]"></i>
+                                <span>Real-Time ANPR Detection Stream</span>
                             </h3>
-                            <span class="text-[10px] font-mono text-slate-400">LIVE FEED</span>
+                            <span class="text-[10px] font-mono text-[#2E9147] font-bold">LIVE WEBSOCKET</span>
                         </div>
                         <div id="live-detection-ticker" class="flex-1 overflow-y-auto p-2 space-y-2"></div>
                     </div>
@@ -439,103 +433,90 @@
             <!-- TAB 2: PREDICTIVE HANDOFF ENGINE -->
             <section id="tab-predictive" class="tab-content hidden space-y-5">
                 <!-- Search & Quick Targets Header -->
-                <div class="op-panel p-4 space-y-3">
+                <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-4 space-y-3 shadow-sm">
                     <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                         <div class="flex-1 flex items-center space-x-2">
-                            <input id="predictive-search-input" type="text" placeholder="ENTER NUMBER PLATE (e.g. 25BH2534O, DL01CA1234, MH12AB9999)..." 
+                            <input id="predictive-search-input" type="text" placeholder="ENTER REGISTRATION PLATE (e.g. 25BH2534O, DL01CA1234, MH12AB9999)..." 
                                    class="op-input font-mono font-bold uppercase tracking-wider">
-                            <button onclick="app.searchPredictiveHandoff()" class="op-btn op-btn-purple whitespace-nowrap">
+                            <button onclick="app.searchPredictiveHandoff()" class="op-btn op-btn-primary bg-[#13752F] text-white border-[#13752F] whitespace-nowrap">
                                 <i data-lucide="radar" class="w-3.5 h-3.5"></i>
                                 <span>Predict Handoff</span>
                             </button>
                         </div>
-                        <span class="op-badge op-badge-watching font-mono">PREDICTIVE HANDOFF ENGINE ACTIVE</span>
+                        <span class="op-badge op-badge-watching font-mono">PREDICTIVE ENGINE ONLINE</span>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2 text-xs pt-2 border-t border-slate-800">
-                        <span class="text-slate-400 font-medium">Quick Demo Targets:</span>
-                        <button class="quick-pred-btn op-btn text-xs font-mono" data-plate="25BH2534O">
-                            🧬 25BH2534O (BH-Series OCR Confusion)
+                    <div class="flex flex-wrap items-center gap-2 text-xs pt-2 border-t border-[#0E446D]">
+                        <span class="text-[#A1B3C4] font-medium">Quick Demo Targets:</span>
+                        <button class="quick-pred-btn op-btn text-xs font-mono bg-[#0A3655] text-[#F7F6F1] border-[#0E446D]" data-plate="25BH2534O">
+                            🧬 25BH2534O (BH-Series Target)
                         </button>
                         <button class="quick-pred-btn op-btn op-btn-danger text-xs font-mono" data-plate="DL01CA1234">
-                            🚨 DL01CA1234 (Stolen Vehicle Watch)
+                            🚨 DL01CA1234 (Stolen Watchlist)
                         </button>
-                        <button class="quick-pred-btn op-btn op-btn-primary text-xs font-mono" data-plate="MH12AB9999">
-                            🎯 MH12AB9999 (Wanted Intercept)
-                        </button>
-                        <button class="quick-pred-btn op-btn text-xs font-mono text-amber-300" data-plate="HR26DQ4321">
-                            ⚡ HR26DQ4321 (Speed Anomaly)
+                        <button class="quick-pred-btn op-btn op-btn-primary text-xs font-mono bg-[#13752F] text-white" data-plate="MH12AB9999">
+                            🎯 MH12AB9999 (Wanted Target)
                         </button>
                     </div>
                 </div>
 
                 <!-- Resolved Identity & Confidence Bar -->
-                <div id="pred-target-card" class="op-panel p-4 space-y-4">
-                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-slate-800">
+                <div id="pred-target-card" class="op-panel bg-[#062B4A] border border-[#0E446D] p-4 space-y-4 shadow-sm">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-[#0E446D]">
                         <div class="flex items-center space-x-3">
-                            <div class="p-2.5 rounded bg-purple-950 border border-purple-800 text-purple-400">
+                            <div class="p-2.5 rounded bg-[#0D5A25]/30 border border-[#13752F] text-[#2E9147]">
                                 <i data-lucide="shield-check" class="w-5 h-5"></i>
                             </div>
                             <div>
-                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Resolved Vehicle Identity</span>
+                                <span class="text-[10px] text-[#A1B3C4] font-bold uppercase tracking-wider">Resolved Target Identity</span>
                                 <div class="flex items-center space-x-2">
-                                    <span id="pred-resolved-plate" class="text-xl font-bold font-mono text-purple-300 tracking-wider">25BH2534O</span>
+                                    <span id="pred-resolved-plate" class="text-xl font-bold font-mono text-[#F7F6F1] tracking-wider">25BH2534O</span>
                                     <span id="pred-plate-badge" class="op-badge op-badge-online">BHARAT SERIES</span>
-                                    <span id="pred-blacklist-badge" class="hidden op-badge op-badge-offline">PRIORITY 1 WATCH</span>
+                                    <span id="pred-blacklist-badge" class="hidden op-badge op-badge-offline">PRIORITY WATCH</span>
                                 </div>
-                                <div class="text-xs text-slate-400 mt-0.5">
-                                    Raw OCR Sighting: <strong id="pred-raw-ocr" class="font-mono text-slate-200">258H25340</strong> &bull;
-                                    Normalized Grammar: <strong id="pred-norm-ocr" class="font-mono text-slate-200">25BH2534O</strong>
+                                <div class="text-xs text-[#A1B3C4] mt-0.5">
+                                    Raw OCR Sighting: <strong id="pred-raw-ocr" class="font-mono text-[#F7F6F1]">258H25340</strong> &bull;
+                                    Normalized Grammar: <strong id="pred-norm-ocr" class="font-mono text-[#F7F6F1]">25BH2534O</strong>
                                 </div>
                             </div>
                         </div>
 
                         <div class="flex flex-wrap items-center gap-6 text-xs">
                             <div>
-                                <span class="text-[10px] text-slate-400 uppercase font-bold">Identity Certainty</span>
+                                <span class="text-[10px] text-[#A1B3C4] uppercase font-bold">Identity Certainty</span>
                                 <div class="flex items-center space-x-2 mt-1">
-                                    <div class="w-28 bg-slate-800 h-2 rounded overflow-hidden border border-slate-700">
-                                        <div id="pred-conf-bar" class="bg-gradient-to-r from-purple-500 to-emerald-400 h-full rounded" style="width: 91%;"></div>
+                                    <div class="w-28 bg-[#0A3655] h-2 rounded overflow-hidden border border-[#0E446D]">
+                                        <div id="pred-conf-bar" class="bg-[#13752F] h-full rounded" style="width: 91%;"></div>
                                     </div>
-                                    <span id="pred-conf-val" class="font-mono font-bold text-emerald-400 text-sm">91%</span>
+                                    <span id="pred-conf-val" class="font-mono font-bold text-[#2E9147] text-sm">91%</span>
                                 </div>
                             </div>
 
                             <div>
-                                <span class="text-[10px] text-slate-400 uppercase font-bold">Last Observed Node</span>
-                                <div id="pred-last-node" class="font-mono font-bold text-slate-100 text-sm">CAM-02 (India Gate)</div>
+                                <span class="text-[10px] text-[#A1B3C4] uppercase font-bold">Last Observed Node</span>
+                                <div id="pred-last-node" class="font-mono font-bold text-[#F7F6F1] text-sm">CAM-03 (Railway Station)</div>
                             </div>
 
                             <div>
-                                <span class="text-[10px] text-slate-400 uppercase font-bold">Sightings Count</span>
-                                <div id="pred-sightings-count" class="font-mono font-bold text-sky-400 text-sm">3 Checkpoints</div>
+                                <span class="text-[10px] text-[#A1B3C4] uppercase font-bold">Sightings Count</span>
+                                <div id="pred-sightings-count" class="font-mono font-bold text-[#2E9147] text-sm">3 Checkpoints</div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Candidate Distribution List -->
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="text-slate-400 font-bold uppercase text-[10px] tracking-wider flex items-center space-x-1">
-                                <i data-lucide="layers" class="w-3.5 h-3.5 text-purple-400"></i>
-                                <span>Probabilistic Candidate Identity Distribution (OCR Confusion Aware)</span>
-                            </span>
-                            <span class="text-[10px] text-slate-500 font-mono">Normalized Indian Grammar + Cost Matrix</span>
-                        </div>
-                        <div id="pred-candidates-list" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
-                    </div>
                 </div>
 
-                <!-- Tri-State Map & Predictions Grid -->
+                <!-- Tri-State Map & Predictions Grid (70% / 30% Split Layout) -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <!-- 70% LEFT: GIS MAP & EXPLAINABILITY PANEL -->
                     <div class="lg:col-span-2 space-y-4">
-                        <div class="op-panel overflow-hidden relative h-[500px] flex flex-col">
-                            <div class="p-2 bg-[#0a0e18] border-b border-slate-800 flex items-center justify-between text-xs z-10">
-                                <span class="font-bold text-slate-200 flex items-center space-x-2">
-                                    <i data-lucide="navigation" class="w-4 h-4 text-purple-400"></i>
-                                    <span>Predictive Route & Handoff GIS Layer</span>
+                        <div class="op-panel bg-[#062B4A] border border-[#0E446D] shadow-sm overflow-hidden relative h-[520px] flex flex-col">
+                            <div class="p-2 bg-[#0A3655] border-b border-[#0E446D] flex items-center justify-between text-xs z-10">
+                                <span class="font-bold text-[#F7F6F1] flex items-center space-x-2">
+                                    <i data-lucide="navigation" class="w-4 h-4 text-[#2E9147]"></i>
+                                    <span>Nagpur Road Network — Predictive Route & Handoff Layer</span>
                                 </span>
-                                <div class="flex items-center space-x-3 text-[10px] font-mono text-slate-300">
+                                <!-- MAP LEGEND -->
+                                <div class="flex items-center space-x-3 text-[10px] font-mono text-[#A1B3C4] font-semibold">
                                     <span><span class="status-dot online"></span> OBSERVED</span>
                                     <span><span class="status-dot degraded"></span> INFERRED</span>
                                     <span><span class="status-dot watching"></span> PREDICTED</span>
@@ -544,175 +525,216 @@
                             <div id="predictive-map" class="flex-1 w-full h-full"></div>
                         </div>
 
-                        <!-- Explainability Rationale Panel -->
-                        <div class="op-panel p-3 space-y-2">
+                        <!-- PREDICTION EXPLAINABILITY BREAKDOWN -->
+                        <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-4 space-y-3 shadow-sm">
                             <div class="flex items-center justify-between">
-                                <h4 class="font-bold text-xs text-slate-200 uppercase tracking-wider flex items-center space-x-2">
-                                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
-                                    <span>Next Camera Prediction Rationale & Factor Breakdown</span>
+                                <h4 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider flex items-center space-x-2">
+                                    <i data-lucide="sliders" class="w-4 h-4 text-[#2E9147]"></i>
+                                    <span>WHY THIS CAMERA? Prediction Engineering Breakdown</span>
                                 </h4>
-                                <span class="text-[10px] font-mono text-purple-400">Mathematical Factor Weights</span>
+                                <span class="text-[10px] font-mono text-[#2E9147] font-bold">Spatio-Temporal Kinematics</span>
                             </div>
-                            <div id="pred-explainability-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+                            <div id="pred-explainability-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                <div class="explainability-row">
+                                    <span class="text-[#A1B3C4]">Direction Consistency</span>
+                                    <strong class="font-mono text-[#2E9147]">HIGH (0.92)</strong>
+                                </div>
+                                <div class="explainability-row">
+                                    <span class="text-[#A1B3C4]">Road Graph Connectivity</span>
+                                    <strong class="font-mono text-[#2E9147]">HIGH (0.96)</strong>
+                                </div>
+                                <div class="explainability-row">
+                                    <span class="text-[#A1B3C4]">Historical Transition</span>
+                                    <strong class="font-mono text-[#F6A126]">MEDIUM (0.74)</strong>
+                                </div>
+                                <div class="explainability-row">
+                                    <span class="text-[#A1B3C4]">Travel Time Feasibility</span>
+                                    <strong class="font-mono text-[#2E9147]">HIGH (0.88)</strong>
+                                </div>
+                                <div class="explainability-row">
+                                    <span class="text-[#A1B3C4]">Current Congestion Index</span>
+                                    <strong class="font-mono text-[#F6A126]">MEDIUM (0.68)</strong>
+                                </div>
+                                <div class="explainability-row">
+                                    <span class="text-[#A1B3C4]">Node Distance Vector</span>
+                                    <strong class="font-mono text-[#F7F6F1]">3.4 km</strong>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Right Column: Ranked Predictions & Watch Queue -->
+                    <!-- 30% RIGHT: PREDICTED NEXT CAMERAS & PRIORITY WATCH QUEUE -->
                     <div class="space-y-5">
-                        <div class="op-panel flex flex-col h-[320px]">
-                            <div class="op-panel-header">
-                                <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider flex items-center space-x-1.5">
-                                    <i data-lucide="arrow-right-circle" class="w-4 h-4 text-purple-400"></i>
-                                    <span>Predicted Next Cameras</span>
+                        <div class="op-panel bg-[#062B4A] border border-[#0E446D] shadow-sm flex flex-col h-[340px]">
+                            <div class="op-panel-header bg-[#0A3655] border-b border-[#0E446D]">
+                                <h3 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider flex items-center space-x-1.5">
+                                    <i data-lucide="arrow-right-circle" class="w-4 h-4 text-[#2E9147]"></i>
+                                    <span>PREDICTED NEXT CAMERAS</span>
                                 </h3>
-                                <span class="text-[10px] font-mono text-purple-400">Probability Ranked</span>
+                                <span class="text-[10px] font-mono text-[#2E9147] font-bold">PROBABILITY RANKED</span>
                             </div>
-                            <div id="pred-ranked-cameras-list" class="flex-1 overflow-y-auto p-2 space-y-2"></div>
+                            <div id="pred-ranked-cameras-list" class="flex-1 overflow-y-auto p-3 space-y-3">
+                                <!-- Rank 1 -->
+                                <div class="p-2.5 rounded bg-[#0A3655] border border-[#0E446D] space-y-1.5">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="font-bold font-mono text-[#2E9147]">#1 CAM-06 Automotive Sq</span>
+                                        <span class="font-mono text-[#2E9147] font-bold">68% Prob</span>
+                                    </div>
+                                    <div class="probability-bar-track">
+                                        <div class="probability-bar-fill rank-1" style="width: 68%;"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[10px] text-[#A1B3C4] font-mono">
+                                        <span>ETA: 2–4 min</span>
+                                        <span>Distance: 3.4 km</span>
+                                    </div>
+                                </div>
+
+                                <!-- Rank 2 -->
+                                <div class="p-2.5 rounded bg-[#0A3655] border border-[#0E446D] space-y-1.5">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="font-bold font-mono text-[#F6A126]">#2 CAM-09 Medical Sq</span>
+                                        <span class="font-mono text-[#F6A126] font-bold">21% Prob</span>
+                                    </div>
+                                    <div class="probability-bar-track">
+                                        <div class="probability-bar-fill rank-2" style="width: 21%;"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[10px] text-[#A1B3C4] font-mono">
+                                        <span>ETA: 4–6 min</span>
+                                        <span>Distance: 4.8 km</span>
+                                    </div>
+                                </div>
+
+                                <!-- Rank 3 -->
+                                <div class="p-2.5 rounded bg-[#0A3655] border border-[#0E446D] space-y-1.5">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="font-bold font-mono text-[#F7F6F1]">#3 CAM-10 Cotton Market</span>
+                                        <span class="font-mono text-[#A1B3C4] font-bold">11% Prob</span>
+                                    </div>
+                                    <div class="probability-bar-track">
+                                        <div class="probability-bar-fill rank-3" style="width: 11%;"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[10px] text-[#A1B3C4] font-mono">
+                                        <span>ETA: 5–8 min</span>
+                                        <span>Distance: 5.2 km</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="op-panel flex flex-col h-[340px] border-purple-800/60">
-                            <div class="op-panel-header">
-                                <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider flex items-center space-x-1.5">
+                        <!-- PRIORITY WATCH QUEUE -->
+                        <div class="op-panel bg-[#062B4A] border border-[#0E446D] shadow-sm flex flex-col h-[340px]">
+                            <div class="op-panel-header bg-[#0A3655] border-b border-[#0E446D]">
+                                <h3 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider flex items-center space-x-1.5">
                                     <span class="status-dot watching"></span>
-                                    <span>Priority Watch Queue</span>
+                                    <span>PRIORITY WATCH QUEUE</span>
                                 </h3>
-                                <span class="op-badge op-badge-watching">Active Watch</span>
+                                <span class="op-badge op-badge-watching">ACTIVE INTERCEPT</span>
                             </div>
-                            <div id="pred-active-watch-list" class="flex-1 overflow-y-auto p-2 space-y-2"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Network Observability Simulator & Reacquisition Dashboard -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                    <div class="op-panel p-4 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider flex items-center space-x-2">
-                                    <i data-lucide="eye-off" class="w-4 h-4 text-amber-400"></i>
-                                    <span>Network Observability & Blind Spot Simulator</span>
-                                </h3>
-                                <p class="text-[11px] text-slate-400 mt-0.5">Toggle camera health to simulate grid failures and dynamic blind spot rerouting.</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-[10px] text-slate-400 font-mono uppercase">Network Visibility</span>
-                                <div id="pred-observability-pct" class="text-xl font-bold font-mono text-emerald-400">94.0%</div>
+                            <div id="pred-active-watch-list" class="flex-1 overflow-y-auto p-3 space-y-2">
+                                <div class="p-2.5 rounded bg-red-950/40 border border-red-800 space-y-1">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="font-mono font-bold text-[#D83A3A]">MH12AB1234</span>
+                                        <span class="op-badge op-badge-offline">CRITICAL</span>
+                                    </div>
+                                    <div class="text-[11px] text-[#A1B3C4]">Last observed: <span class="font-mono text-[#F7F6F1] font-bold">CAM-03</span></div>
+                                    <div class="text-[11px] text-[#A1B3C4]">Expected next: <span class="font-mono text-[#F6A126] font-bold">CAM-06</span></div>
+                                    <div class="flex items-center justify-between text-[10px] font-mono text-[#A1B3C4] mt-1">
+                                        <span>ETA: 2–4 min</span>
+                                        <span class="text-[#F6A126] font-bold">WATCHING</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        <div class="space-y-1.5">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Interactive Camera Node Status:</span>
-                            <div id="camera-health-toggles-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
-                        </div>
-
-                        <div id="blind-spots-alert-container" class="space-y-2 pt-2 border-t border-slate-800"></div>
-                    </div>
-
-                    <div class="op-panel flex flex-col h-[320px]">
-                        <div class="op-panel-header">
-                            <div>
-                                <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider flex items-center space-x-2">
-                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
-                                    <span>Reacquisition Accuracy & Learning</span>
-                                </h3>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-[10px] text-slate-400 font-mono uppercase">Accuracy</span>
-                                <span id="pred-accuracy-metric" class="text-base font-bold font-mono text-emerald-400">91.5%</span>
-                            </div>
-                        </div>
-
-                        <div id="reacquisition-logs-list" class="flex-1 overflow-y-auto p-2 space-y-2"></div>
                     </div>
                 </div>
             </section>
 
             <!-- TAB 3: VEHICLE TRAJECTORY -->
             <section id="tab-trajectory" class="tab-content hidden space-y-5">
-                <div class="op-panel p-4 space-y-3">
+                <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-4 space-y-3 shadow-sm">
                     <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                         <div class="flex-1 flex items-center space-x-2">
-                            <input id="traj-search-input" type="text" placeholder="ENTER NUMBER PLATE (e.g. MH49AE2355, MH31DQ4321, MH31AB9999)..." 
+                            <input id="traj-search-input" type="text" placeholder="ENTER REGISTRATION PLATE (e.g. MH49AE2355, MH31DQ4321, MH31AB9999)..." 
                                    class="op-input font-mono font-bold uppercase tracking-wider">
-                            <button onclick="app.searchTrajectory()" class="op-btn op-btn-primary whitespace-nowrap">
+                            <button onclick="app.searchTrajectory()" class="op-btn op-btn-primary bg-[#13752F] text-white border-[#13752F] whitespace-nowrap">
                                 <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
                                 <span>Reconstruct Route</span>
                             </button>
                         </div>
-                        <button id="btn-export-dossier" class="op-btn">
-                            <i data-lucide="file-text" class="w-3.5 h-3.5 text-sky-400"></i>
+                        <a href="/api/export/excel" download="vehicle_dossier.xlsx" class="op-btn bg-[#0A3655] border-[#0E446D] text-[#F7F6F1]" title="Export Investigation Dossier">
+                            <i data-lucide="file-text" class="w-3.5 h-3.5 text-[#2E9147]"></i>
                             <span>Export Dossier</span>
-                        </button>
+                        </a>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2 text-xs pt-2 border-t border-slate-800">
-                        <span class="text-slate-400 font-medium">Quick Nagpur Targets:</span>
+                    <div class="flex flex-wrap items-center gap-2 text-xs pt-2 border-t border-[#0E446D]">
+                        <span class="text-[#A1B3C4] font-medium">Quick Nagpur Targets:</span>
                         <button class="quick-plate-btn op-btn op-btn-danger text-xs font-mono" data-plate="MH49AE2355">
-                            🚨 MH49AE2355 (Nagpur Stolen)
+                            🚨 MH49AE2355 (Stolen Target)
                         </button>
-                        <button class="quick-plate-btn op-btn text-xs font-mono text-amber-300" data-plate="MH31DQ4321">
+                        <button class="quick-plate-btn op-btn text-xs font-mono text-[#F6A126] bg-[#0A3655] border-[#0E446D]" data-plate="MH31DQ4321">
                             ⚡ MH31DQ4321 (Speed Anomaly)
                         </button>
-                        <button class="quick-plate-btn op-btn op-btn-primary text-xs font-mono" data-plate="MH31AB9999">
-                            🎯 MH31AB9999 (Nagpur Wanted)
+                        <button class="quick-plate-btn op-btn op-btn-primary text-xs font-mono bg-[#13752F] text-white" data-plate="MH31AB9999">
+                            🎯 MH31AB9999 (Wanted Vehicle)
                         </button>
                     </div>
                 </div>
 
-                <div id="traj-not-found" class="hidden op-panel p-6 text-center text-slate-400 text-xs">
+                <div id="traj-not-found" class="hidden op-panel bg-[#062B4A] border border-[#0E446D] p-6 text-center text-[#A1B3C4] text-xs">
                     No detection records found for this plate number.
                 </div>
 
                 <div id="traj-results-container" class="space-y-4">
-                    <div class="op-panel p-4 flex flex-wrap items-center justify-between gap-4">
+                    <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
                         <div class="flex items-center space-x-4">
                             <div>
-                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Target Registration</span>
-                                <div id="traj-plate-title" class="text-2xl font-bold font-mono text-sky-300 tracking-wider">--</div>
+                                <span class="text-[10px] text-[#A1B3C4] font-bold uppercase tracking-wider">TARGET REGISTRATION</span>
+                                <div id="traj-plate-title" class="text-2xl font-bold font-mono text-[#F7F6F1] tracking-wider">MH49AE2355</div>
                             </div>
-                            <span id="traj-plate-type-badge" class="op-badge op-badge-offline font-mono font-bold text-xs">--</span>
+                            <span id="traj-plate-type-badge" class="op-badge op-badge-offline font-mono font-bold text-xs">WATCHLIST</span>
                         </div>
 
                         <div class="flex items-center space-x-6 text-xs">
                             <div>
-                                <span class="text-[10px] text-slate-400 uppercase font-bold">First Sight</span>
-                                <div id="traj-first-seen" class="font-mono text-slate-200">--:--:--</div>
+                                <span class="text-[10px] text-[#A1B3C4] uppercase font-bold">FIRST SIGHT</span>
+                                <div id="traj-first-seen" class="font-mono text-[#F7F6F1] font-bold">10:02:13</div>
                             </div>
                             <div>
-                                <span class="text-[10px] text-slate-400 uppercase font-bold">Last Sighting</span>
-                                <div id="traj-last-seen" class="font-mono text-slate-200">--:--:--</div>
+                                <span class="text-[10px] text-[#A1B3C4] uppercase font-bold">LAST SIGHT</span>
+                                <div id="traj-last-seen" class="font-mono text-[#F7F6F1] font-bold">10:16:02</div>
                             </div>
                             <div>
-                                <span class="text-[10px] text-slate-400 uppercase font-bold">Total Distance</span>
-                                <div id="traj-total-dist" class="font-mono text-slate-200">0 km</div>
+                                <span class="text-[10px] text-[#A1B3C4] uppercase font-bold">TOTAL DISTANCE</span>
+                                <div id="traj-total-dist" class="font-mono text-[#F7F6F1] font-bold">7.3 km</div>
                             </div>
                             <div>
-                                <span class="text-[10px] text-slate-400 uppercase font-bold">Avg Speed</span>
-                                <div id="traj-avg-speed" class="font-mono text-slate-200">0 km/h</div>
+                                <span class="text-[10px] text-[#A1B3C4] uppercase font-bold">AVG SPEED</span>
+                                <div id="traj-avg-speed" class="font-mono text-[#F7F6F1] font-bold">48.5 km/h</div>
                             </div>
                             <div>
-                                <span class="text-[10px] text-slate-400 uppercase font-bold">Observations</span>
-                                <div id="traj-observation-count" class="font-mono text-sky-400 font-bold">0 Checkpoints</div>
+                                <span class="text-[10px] text-[#A1B3C4] uppercase font-bold">OBSERVATIONS</span>
+                                <div id="traj-observation-count" class="font-mono text-[#2E9147] font-bold">3 Checkpoints</div>
                             </div>
                         </div>
                     </div>
 
-                    <div id="traj-anomaly-banner" class="hidden p-3 rounded-xl bg-red-950/60 border border-red-500/60 text-red-300 text-xs font-semibold flex items-center space-x-2">
-                        <i data-lucide="alert-triangle" class="w-4 h-4 text-red-400"></i>
+                    <div id="traj-anomaly-banner" class="hidden p-3 rounded-lg bg-red-950/60 border border-red-700 text-red-200 text-xs font-semibold flex items-center space-x-2">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-[#D83A3A]"></i>
                         <span id="traj-anomaly-text"></span>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                        <div class="lg:col-span-2 op-panel overflow-hidden relative h-[500px]">
+                        <div class="lg:col-span-2 op-panel bg-[#062B4A] border border-[#0E446D] shadow-sm overflow-hidden relative h-[520px]">
                             <div id="trajectory-map" class="w-full h-full"></div>
                         </div>
 
-                        <div class="op-panel p-4 space-y-3">
-                            <h4 class="font-bold text-xs text-slate-200 uppercase tracking-wider flex items-center space-x-2">
-                                <i data-lucide="clock" class="w-4 h-4 text-sky-400"></i>
-                                <span>Spatio-Temporal Sequence</span>
+                        <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-4 space-y-3 flex flex-col h-[520px] shadow-sm">
+                            <h4 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider flex items-center space-x-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-[#2E9147]"></i>
+                                <span>SPATIO-TEMPORAL SEQUENCE</span>
                             </h4>
-                            <div id="trajectory-timeline" class="space-y-3 max-h-[440px] overflow-y-auto pr-1"></div>
+                            <div id="trajectory-timeline" class="trajectory-timeline flex-1 overflow-y-auto pr-1"></div>
                         </div>
                     </div>
                 </div>
@@ -721,28 +743,28 @@
             <!-- TAB 4: TRAFFIC ANALYTICS -->
             <section id="tab-analytics" class="tab-content hidden space-y-5">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                    <div class="op-panel p-4 space-y-3 flex flex-col">
-                        <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">Hourly Traffic Volume Trend</h3>
+                    <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-4 space-y-3 flex flex-col shadow-sm">
+                        <h3 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider">HOURLY TRAFFIC VOLUME TREND</h3>
                         <div class="relative w-full h-64 flex-1"><canvas id="chart-volume" class="w-full h-full"></canvas></div>
                     </div>
 
-                    <div class="op-panel p-4 space-y-3 flex flex-col">
-                        <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">Network Speed Distribution</h3>
+                    <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-4 space-y-3 flex flex-col shadow-sm">
+                        <h3 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider">NETWORK SPEED DISTRIBUTION</h3>
                         <div class="relative w-full h-64 flex-1"><canvas id="chart-speed" class="w-full h-full"></canvas></div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                    <div class="lg:col-span-2 op-panel overflow-hidden relative h-[400px] flex flex-col">
-                        <div class="p-2 bg-[#0a0e18] border-b border-slate-800 flex items-center justify-between text-xs">
-                            <span class="font-bold text-slate-200">GIS Congestion & Heat Density Map</span>
-                            <span class="text-[10px] font-mono text-amber-400">MODERATE CONGESTION</span>
+                    <div class="lg:col-span-2 op-panel bg-[#062B4A] border border-[#0E446D] shadow-sm overflow-hidden relative h-[420px] flex flex-col">
+                        <div class="p-2 bg-[#0A3655] border-b border-[#0E446D] flex items-center justify-between text-xs">
+                            <span class="font-bold text-[#F7F6F1]">GIS CONGESTION & HEAT DENSITY MAP</span>
+                            <span class="text-[10px] font-mono text-[#F6A126] font-bold">MODERATE TRAFFIC CONGESTION</span>
                         </div>
-                        <div id="heatmap-map" class="flex-1 w-full h-full min-h-[340px]"></div>
+                        <div id="heatmap-map" class="flex-1 w-full h-full min-h-[360px]"></div>
                     </div>
 
-                    <div class="op-panel p-4 space-y-3 flex flex-col">
-                        <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">Camera Node Traffic Density</h3>
+                    <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-4 space-y-3 flex flex-col shadow-sm">
+                        <h3 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider">CAMERA NODE TRAFFIC DENSITY</h3>
                         <div class="relative w-full h-80 flex-1"><canvas id="chart-camera-traffic" class="w-full h-full"></canvas></div>
                     </div>
                 </div>
@@ -751,22 +773,22 @@
             <!-- TAB 5: SECURITY & WATCHLIST -->
             <section id="tab-security" class="tab-content hidden space-y-5">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                    <div class="op-panel p-4 space-y-4">
-                        <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider flex items-center space-x-2">
-                            <i data-lucide="plus-circle" class="w-4 h-4 text-red-400"></i>
-                            <span>Add Vehicle to Watchlist</span>
+                    <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-4 space-y-4 shadow-sm">
+                        <h3 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider flex items-center space-x-2">
+                            <i data-lucide="plus-circle" class="w-4 h-4 text-[#D83A3A]"></i>
+                            <span>ADD VEHICLE TO WATCHLIST</span>
                         </h3>
                         <form id="add-blacklist-form" class="space-y-3" onsubmit="app.addBlacklist(event); return false;">
                             <div>
-                                <label class="text-[10px] font-bold text-slate-400 uppercase">Registration Plate Number:</label>
-                                <input id="bl-input-plate" type="text" placeholder="e.g. DL01CA1234" required class="op-input font-mono uppercase font-bold mt-1">
+                                <label class="text-[10px] font-bold text-[#A1B3C4] uppercase">Registration Plate Number:</label>
+                                <input id="bl-input-plate" type="text" placeholder="e.g. MH12AB1234" required class="op-input font-mono uppercase font-bold mt-1">
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold text-slate-400 uppercase">Watch Reason / Description:</label>
-                                <input id="bl-input-reason" type="text" placeholder="e.g. Reported Stolen / Crime Suspect" required class="op-input mt-1">
+                                <label class="text-[10px] font-bold text-[#A1B3C4] uppercase">Watch Reason / Description:</label>
+                                <input id="bl-input-reason" type="text" placeholder="e.g. Reported stolen vehicle" required class="op-input mt-1">
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold text-slate-400 uppercase">Priority Severity:</label>
+                                <label class="text-[10px] font-bold text-[#A1B3C4] uppercase">Priority Severity:</label>
                                 <select id="bl-input-severity" class="op-input mt-1">
                                     <option value="CRITICAL">CRITICAL (Priority 1)</option>
                                     <option value="HIGH">HIGH (Priority 2)</option>
@@ -775,24 +797,28 @@
                             </div>
                             <button type="submit" onclick="app.addBlacklist(event)" class="op-btn op-btn-danger w-full">
                                 <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
-                                <span>Register Priority Watch</span>
+                                <span>REGISTER PRIORITY WATCH</span>
                             </button>
                         </form>
                     </div>
 
-                    <div class="lg:col-span-2 op-panel flex flex-col h-[400px]">
-                        <div class="op-panel-header">
-                            <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">Active Watchlist Registry</h3>
-                            <span class="text-[10px] font-mono text-slate-400">ENFORCEMENT DATABASE</span>
+                    <div class="lg:col-span-2 op-panel bg-[#062B4A] border border-[#0E446D] shadow-sm flex flex-col h-[420px]">
+                        <div class="op-panel-header bg-[#0A3655] border-b border-[#0E446D] flex flex-wrap items-center justify-between gap-2">
+                            <h3 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider">ACTIVE WATCHLIST REGISTRY</h3>
+                            <div class="flex items-center space-x-2">
+                                <input id="bl-search-filter" type="text" placeholder="Search plate..." onkeyup="app.filterWatchlist()" class="bg-[#062B4A] border border-[#0E446D] rounded px-2 py-1 text-xs text-[#F7F6F1] font-mono">
+                                <span class="text-[10px] font-mono text-[#A1B3C4] font-bold">ENFORCEMENT DATABASE</span>
+                            </div>
                         </div>
                         <div class="op-table-container flex-1 border-0 rounded-none">
                             <table class="op-table">
                                 <thead>
                                     <tr>
                                         <th>Plate Number</th>
-                                        <th>Reason / Offense</th>
+                                        <th>Category / Offense</th>
                                         <th>Severity</th>
                                         <th>Registered Date</th>
+                                        <th>Status</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -802,46 +828,37 @@
                     </div>
                 </div>
 
-                <div class="op-panel p-4 space-y-3">
-                    <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">Recent Watchlist Interceptions Log</h3>
+                <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-4 space-y-3 shadow-sm">
+                    <h3 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider">RECENT WATCHLIST INTERCEPTIONS LOG</h3>
                     <div id="recent-alerts-list" class="space-y-2"></div>
                 </div>
             </section>
 
-            <!-- TAB 6: CAMERA NETWORK INFRASTRUCTURE -->
+            <!-- TAB 6: CAMERA NETWORK -->
             <section id="tab-infrastructure" class="tab-content hidden space-y-5">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                    <div class="lg:col-span-2 op-panel overflow-hidden relative h-[450px]">
-                        <div id="infra-map" class="w-full h-full"></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="op-stat-box bg-[#062B4A] border border-[#0E446D] shadow-sm">
+                        <span class="text-[10px] font-bold text-[#A1B3C4] uppercase">CAMERAS ONLINE</span>
+                        <div class="text-xl font-bold font-mono text-[#2E9147] mt-1">12 / 12</div>
                     </div>
-
-                    <div class="op-panel p-4 space-y-3">
-                        <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">Infrastructure Status Summary</h3>
-                        <div class="space-y-2 text-xs">
-                            <div class="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800">
-                                <span>Total Deployed Nodes:</span>
-                                <strong class="font-mono text-slate-100">12 Nodes</strong>
-                            </div>
-                            <div class="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800">
-                                <span>Operational Online:</span>
-                                <strong class="font-mono text-emerald-400">12 / 12 (100%)</strong>
-                            </div>
-                            <div class="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800">
-                                <span>Network Observability:</span>
-                                <strong class="font-mono text-sky-400">94.0% Optimal</strong>
-                            </div>
-                            <div class="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800">
-                                <span>ANPR Ingestion Protocol:</span>
-                                <strong class="font-mono text-slate-300">RTSP / WebSocket</strong>
-                            </div>
-                        </div>
+                    <div class="op-stat-box bg-[#062B4A] border border-[#0E446D] shadow-sm">
+                        <span class="text-[10px] font-bold text-[#A1B3C4] uppercase">DEGRADED</span>
+                        <div class="text-xl font-bold font-mono text-[#A1B3C4] mt-1">0</div>
+                    </div>
+                    <div class="op-stat-box bg-[#062B4A] border border-[#0E446D] shadow-sm">
+                        <span class="text-[10px] font-bold text-[#A1B3C4] uppercase">OFFLINE</span>
+                        <div class="text-xl font-bold font-mono text-[#A1B3C4] mt-1">0</div>
+                    </div>
+                    <div class="op-stat-box bg-[#062B4A] border border-[#0E446D] shadow-sm">
+                        <span class="text-[10px] font-bold text-[#A1B3C4] uppercase">AVERAGE LATENCY</span>
+                        <div class="text-xl font-bold font-mono text-[#2E9147] mt-1">14 ms</div>
                     </div>
                 </div>
 
-                <div class="op-panel">
-                    <div class="op-panel-header">
-                        <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">Surveillance Camera Registry</h3>
-                        <span class="text-[10px] font-mono text-slate-400">HARDWARE MATRIX</span>
+                <div class="op-panel bg-[#062B4A] border border-[#0E446D] shadow-sm">
+                    <div class="op-panel-header bg-[#0A3655] border-b border-[#0E446D]">
+                        <h3 class="font-bold text-xs text-[#F7F6F1] uppercase tracking-wider">ANPR CAMERA NODE NETWORK</h3>
+                        <span class="text-[10px] font-mono text-[#A1B3C4] font-bold">HARDWARE MATRIX</span>
                     </div>
                     <div class="op-table-container border-0 rounded-none">
                         <table class="op-table">
@@ -851,7 +868,9 @@
                                     <th>Location / Junction</th>
                                     <th>Sector</th>
                                     <th>Direction</th>
-                                    <th>Coordinates</th>
+                                    <th>FPS</th>
+                                    <th>ANPR Status</th>
+                                    <th>Health %</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -860,13 +879,94 @@
                     </div>
                 </div>
             </section>
+
+            <!-- TAB 7: INVESTIGATION REPORTS -->
+            <section id="tab-reports" class="tab-content hidden space-y-5">
+                <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-5 space-y-4 shadow-sm">
+                    <div class="flex items-center justify-between pb-3 border-b border-[#0E446D]">
+                        <div>
+                            <h3 class="font-bold text-sm text-[#F7F6F1] uppercase tracking-wider">INVESTIGATION & EXCEL DOSSIER EXPORT</h3>
+                            <p class="text-xs text-[#A1B3C4] mt-0.5">Generate formal law-enforcement dossiers, download raw detection logs, or open Excel databases.</p>
+                        </div>
+                        <a href="/api/export/excel" download="vehicle_data.xlsx" class="op-btn op-btn-primary bg-[#13752F] text-white border-[#13752F]">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Export Full Excel Database</span>
+                        </a>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="op-card bg-[#0A3655] border border-[#0E446D] space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-xs text-[#F7F6F1]">System Database Backup</span>
+                                <span class="op-badge op-badge-online">SQLITE</span>
+                            </div>
+                            <p class="text-xs text-[#A1B3C4]">Export complete camera, detection, watchlist, and alert logs to Excel format.</p>
+                            <a href="/api/export/excel" download="vehicle_data.xlsx" class="op-btn w-full bg-[#062B4A] border-[#0E446D] text-[#F7F6F1]">Download .XLSX File</a>
+                        </div>
+
+                        <div class="op-card bg-[#0A3655] border border-[#0E446D] space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-xs text-[#F7F6F1]">Native Desktop Excel</span>
+                                <span class="op-badge op-badge-watching">WIN32</span>
+                            </div>
+                            <p class="text-xs text-[#A1B3C4]">Launch Microsoft Excel natively on your workstation with live data tables.</p>
+                            <button onclick="app.openExcelOnSystem()" class="op-btn op-btn-purple w-full bg-[#D98212] text-white border-[#D98212]">Launch Desktop Excel</button>
+                        </div>
+
+                        <div class="op-card bg-[#0A3655] border border-[#0E446D] space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-xs text-[#F7F6F1]">Watchlist Dossier</span>
+                                <span class="op-badge op-badge-offline font-bold">PDF/HTML</span>
+                            </div>
+                            <p class="text-xs text-[#A1B3C4]">Export printable investigation dossier for targeted license plates.</p>
+                            <button onclick="app.switchTab('trajectory')" class="op-btn w-full bg-[#062B4A] border-[#0E446D] text-[#F7F6F1]">Open Trajectory Search</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 8: SYSTEM SETTINGS -->
+            <section id="tab-settings" class="tab-content hidden space-y-5">
+                <div class="op-panel bg-[#062B4A] border border-[#0E446D] p-5 space-y-4 shadow-sm">
+                    <div class="pb-3 border-b border-[#0E446D]">
+                        <h3 class="font-bold text-sm text-[#F7F6F1] uppercase tracking-wider">ANPR ENGINE & SYSTEM CONFIGURATION</h3>
+                        <p class="text-xs text-[#A1B3C4] mt-0.5">Parameters for YOLO11 license plate localization, EasyOCR confidence, and regex rules.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+                        <div class="space-y-3">
+                            <h4 class="font-bold text-[#2E9147] uppercase">Detection Thresholds</h4>
+                            <div class="space-y-2">
+                                <label class="text-[#A1B3C4] block">YOLO Plate Model Confidence Cutoff (0.40):</label>
+                                <input type="range" min="0.1" max="0.9" step="0.05" value="0.40" class="w-full">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[#A1B3C4] block">OCR Recognition Confidence Cutoff (0.50):</label>
+                                <input type="range" min="0.1" max="0.9" step="0.05" value="0.50" class="w-full">
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <h4 class="font-bold text-[#2E9147] uppercase">Grammar & Format Rules</h4>
+                            <div class="flex items-center justify-between p-3 rounded bg-[#0A3655] border border-[#0E446D]">
+                                <span>Indian Standard Regex Filter (XX 00 XX 0000):</span>
+                                <span class="op-badge op-badge-online">ACTIVE</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 rounded bg-[#0A3655] border border-[#0E446D]">
+                                <span>Bharat (BH) Series Grammar Rules:</span>
+                                <span class="op-badge op-badge-online">ACTIVE</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
-    <script src="/static/js/alerts_manager.js?v=2.0.8"></script>
-    <script src="/static/js/map_controller.js?v=2.0.8"></script>
-    <script src="/static/js/analytics_charts.js?v=2.0.8"></script>
-    <script src="/static/js/theme_controller.js?v=2.0.8"></script>
-    <script src="/static/js/app.js?v=2.0.8"></script>
+    <script src="/static/js/alerts_manager.js?v=4.0.0"></script>
+    <script src="/static/js/map_controller.js?v=4.0.0"></script>
+    <script src="/static/js/analytics_charts.js?v=4.0.0"></script>
+    <script src="/static/js/theme_controller.js?v=4.0.0"></script>
+    <script src="/static/js/app.js?v=4.0.0"></script>
 </body>
 </html>
